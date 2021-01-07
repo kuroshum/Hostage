@@ -1,0 +1,956 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Enemy : Token
+{
+    /// <summary>
+    /// 管理オブジェクト
+    /// </summary>
+    public static TokenMgr<Enemy> parent = null;
+
+    /// <summary>
+    /// ゲームマネージャー
+    /// </summary>
+    private GameMgr gm;
+    private void SetGmaeMgr(GameMgr gm) { this.gm = gm; }
+
+    [SerializeField]
+    private int ID;
+    public void SetParam(int id) { ID = id; }
+
+    /// <summary>
+    /// 現在いる部屋のID
+    /// </summary>
+    [SerializeField]
+    private int stageID;
+    public void SetStageID(int id) { stageID = id; }
+    public int GetStageID() { return stageID; }
+
+    public float speed;
+
+    private float normalSpeed;
+    private float dangerSpeed;
+
+    /// <summary>
+    /// 敵と壁間のベクトル
+    /// </summary>
+    private Vector3 wallDirection;
+
+    private Vector3 targetDirection;
+    private Vector3 playerDirection;
+
+    /// <summary>
+    /// 目的地のステージ
+    /// </summary>
+    private Stage targetStage;
+    /// <summary>
+    /// 目的地のステージの座標
+    /// </summary>
+    private Vector3 targetStagePos;
+    public void SetTargetStagePos(Vector3 pos) { targetStagePos = pos; }
+
+    /// <summary>
+    /// 目的地に行くまでに障害物があった場合に中継する地点
+    /// </summary>
+    [SerializeField]
+    private Stage relayStage;
+    /// <summary>
+    /// 目的地に行くまでに障害物があった場合に中継する地点の座標
+    /// </summary>
+    [SerializeField]
+    private Vector3 relayStagePos;
+
+    /// <summary>
+    /// 確率マップのクラスのインスタンス
+    /// </summary>
+    private ProbabilityMap pm;
+    private void SetProbabilityMap(ProbabilityMap pm) { this.pm = pm; }
+
+    /*
+    private Stack<Vector3> targetPosStk;
+    public void PushTargetPosStk(Vector3 target)
+    {
+        targetPosStk.Push(target);
+        MoveFlag = false;
+    }
+    */
+
+    /// <summary>
+    /// シーン上にあるウェイポイント
+    /// </summary>
+    public static WayPoint wp;
+
+    /// <summary>
+    /// プレイヤーのインスタンス
+    /// </summary>
+    private Player player;
+
+    /// <summary>
+    /// 障害物が進行方向にあるか
+    /// </summary>
+    private bool ObstFlag;
+    
+    /// <summary>
+    /// 障害物にぶつかってからの時間
+    /// </summary>
+    public float obstTime;
+
+    public bool MoveFlag;
+
+    public bool GetObstFlag() { return ObstFlag; }
+    public bool GetMoveFlag() { return MoveFlag; }
+
+
+    //public void SetTargetPos(Enemy e) { targetPos = e.transform.position; }
+
+    /*
+    [SerializeField]
+    private GameObject target;
+
+    [SerializeField]
+    private GameObject relay;
+    */
+
+    public static float normalEyeSightRange = 50f;
+    public static float cautionEyeSightRange = 80f;
+    public static float dangerEyeSightRange = 100f;
+
+    public static float normalEyeSightLength = 20f;
+    public static float cautionEyeSightLength = 40f;
+    public static float dangerEyeSightLength = 60f;
+
+    /// <summary>
+    /// 速度
+    /// </summary>
+    public Vector3 velocity;
+
+    /// <summary>
+    /// 向き
+    /// </summary>
+    private Vector2 forward;
+
+    [SerializeField]
+    private int SHOT_NUM;
+
+    public float m_shotSpeed; // 弾の移動の速さ
+    public float m_shotAngleRange; // 複数の弾を発射する時の角度
+    public float m_shotTimer; // 弾の発射タイミングを管理するタイマー
+    public int m_shotCount; // 弾の発射数
+    public float m_shotInterval; // 弾の発射間隔（秒）
+
+    [SerializeField]
+    private Vector3 offset;
+
+    [SerializeField]
+    private Vector3 keyOffset;
+
+    
+    [SerializeField]
+    private GameObject dangerUI;
+
+    [SerializeField]
+    private GameObject cautionUI;
+
+    [SerializeField]
+    private GameObject keyUI;
+
+    private bool cautionFlag;
+    public bool GetCautionFlag() { return cautionFlag; }
+
+    private bool dangerFlag;
+    public bool GetDangerFlag() { return dangerFlag; }
+
+    private bool keyUIFlag;
+
+    private bool startFlag;
+    public void SetStartFlag(bool flag) { this.startFlag = flag; }
+
+    [SerializeField]
+    private StateType states;
+    public StateType GetStates() { return states; }
+    public void SetStates(StateType states) { this.states = states; }
+
+    private CautionTimeManager ctm;
+
+    private DisplayPurpose dp;
+
+
+    public static Enemy Add(int id, float x, float y, float z, int stageID, GameMgr gm, ProbabilityMap pm)
+    {
+        // Enemyインスタンスの取得
+        Enemy e = parent.Add(x, y, z);
+
+        e.SetGmaeMgr(gm);
+
+        e.SetProbabilityMap(pm);
+
+        e.SetStageID(stageID);
+
+        // IDを設定したり固有の処理をする
+        e.SetParam(id);
+
+        return e;
+    }
+
+    //public void InitMgrTarget(float speed, Vector3 InitTargetPos, Player p)
+    public void InitMgrTarget(float speed, Player p, bool keyUIFlag, DisplayPurpose dp)
+    {
+        //targetPosStk = new Stack<Vector3>();
+        //targetPosStk = new Stack<Vector3>();
+        //targetPosStk.Push(InitTargetPos);
+        //targetStagePos = InitTargetPos;
+        relayStagePos = Vector3.zero;
+
+
+        this.MoveFlag = true;
+
+        this.speed = speed;
+        normalSpeed = speed;
+        dangerSpeed = speed * 2;
+        //
+        wp = this.gameObject.GetComponent<WayPoint>();
+        wp.Initialize();
+
+        player = p;
+
+        SetStates(StateType.Normal);
+
+        obstTime = 0;
+
+        SelectTarget(pm, ref GameMgr.stageList);
+
+        cautionFlag = false;
+        dangerFlag = false;
+
+        this.keyUIFlag = keyUIFlag;
+
+        this.dp = dp;
+
+        startFlag = false;
+        /*
+        target = Instantiate(target, Vector3.zero, Quaternion.identity);
+        relay = Instantiate(relay, Vector3.zero, Quaternion.identity);
+        */
+    }
+
+    public void InitilizeUI()
+    {
+        GameObject prefab;
+
+        // 
+        prefab = Resources.Load("Prefabs/" + "DangerUI") as GameObject;
+        dangerUI = Instantiate(prefab, this.transform.position + offset, prefab.transform.rotation) as GameObject;
+        dangerUI.SetActive(false);
+
+        prefab = Resources.Load("Prefabs/" + "CautionUI") as GameObject;
+        cautionUI = Instantiate(prefab, this.transform.position + offset, prefab.transform.rotation) as GameObject;
+        cautionUI.SetActive(false);
+
+        if(keyUIFlag == true)
+        {
+            prefab = Resources.Load("Prefabs/" + "keyUI") as GameObject;
+            keyUI = Instantiate(prefab, this.transform.position + offset, prefab.transform.rotation) as GameObject;
+        }
+
+        ctm = cautionUI.transform.Find("time").GetComponent<CautionTimeManager>();
+        ctm.SetTime(5f);
+    }
+
+    public void Initilize_Shot()
+    {
+        // 管理オブジェクトを生成
+        EnemyShot.parent = new TokenMgr<EnemyShot>("EnemyShot", SHOT_NUM);
+    }
+
+    public void LookPlayer()
+    {
+
+        //Debug.Log(stages[tmpStageColorsIndex[0]]);
+        //Quaternion rot = Quaternion.LookRotation(targetPosStk.Peek() - this.transform.position);
+        Quaternion rot = Quaternion.LookRotation(player.transform.position - this.transform.position);
+        this.transform.rotation = Quaternion.Lerp(this.transform.rotation, rot, speed / 30);
+
+
+    }
+
+    public void LookTarget(Vector3 targetPos)
+    {
+
+        //Debug.Log(stages[tmpStageColorsIndex[0]]);
+        //Quaternion rot = Quaternion.LookRotation(targetPosStk.Peek() - this.transform.position);
+        //Quaternion rot = Quaternion.LookRotation(targetStagePos - this.transform.position);
+        Quaternion rot = Quaternion.LookRotation(targetPos - this.transform.position);
+        if (Vector3.Angle(rot.eulerAngles, this.transform.rotation.eulerAngles) > 1f)
+        {
+            this.transform.rotation = Quaternion.Lerp(this.transform.rotation, rot, speed/20);
+            //return true;
+        }
+        else
+        {
+            MoveFlag = true;
+            //return false;
+        }
+
+
+    }
+
+    // 指定された角度（ 0 ～ 360 ）をベクトルに変換して返す
+    public Vector3 GetDirection(float angle)
+    {
+        return new Vector3
+        (
+            Mathf.Cos(angle * Mathf.Deg2Rad),
+            0,
+            Mathf.Sin(angle * Mathf.Deg2Rad)
+        );
+    }
+
+    // 指定された 2 つの位置から角度を求めて返す
+    public float GetAngle(Vector3 from, Vector3 to)
+    {
+        var dx = to.x - from.x;
+        var dz = to.z - from.z;
+        var rad = Mathf.Atan2(dz, dx);
+        return rad * Mathf.Rad2Deg;
+    }
+
+    public void MoveTarget()
+    {
+        Vector3 targetPos = targetStagePos;
+        if(relayStagePos != Vector3.zero)
+        {
+            targetPos = relayStagePos;
+        }
+        //if (!Look_Target())
+        //{
+        LookTarget(targetPos);
+        //velocity = (targetPosStk.Peek() - this.transform.position).normalized * speed;
+        //velocity = (targetStagePos - this.transform.position).normalized * speed;
+        if (MoveFlag == true)
+        {
+            velocity = (targetPos - this.transform.position).normalized * speed;
+            transform.position += velocity * Time.deltaTime;
+        }
+
+        //transform.position = Vector3.MoveTowards(transform.position, targetPosStk.Peek(), speed * Time.deltaTime);
+        //}
+
+    }
+    
+    public void Coloring_Target(ref Stage stage, Color targetColor)
+    {
+        stage.material.SetColor("_Color", targetColor);
+    }
+
+    public void ColoringTarget(ref Wall wall, Color targetColor)
+    {
+        wall.obj.GetComponent<Material>().SetColor("_Color", targetColor);
+    }
+
+    /// <summary>
+    /// 目的地に到達できているかを確認する関数
+    /// </summary>
+    /// <param name="stageList"></param>
+    /// <returns></returns>
+    public bool IsReachTarget(ref List<Stage> stageList)
+    {
+        /*
+        if (targetPosStk.Count==0)
+        {
+            //Debug.Log("not set to target");
+            return false;
+        }
+        */
+
+        //Coloring_Target(ref stageList, new Color(stageList[0].material.color.r, 0.0f, stageList[0].material.color.b, 0.0f));
+        //return Vector3.SqrMagnitude(targetPosStk.Peek() - this.transform.position) < 0.4f ? true : false;
+
+        // 中継地点を設定している場合
+        if(relayStagePos != Vector3.zero)
+        {
+            //Debug.Log(relayStagePos);
+            //Debug.Log(this.transform.position);
+            return Vector3.SqrMagnitude(relayStagePos - this.transform.position) < 0.4f ? true : false;
+        }
+        // 中継地点が設定されていない（目的地までに障害物が無い）場合
+        else
+        {
+            return Vector3.SqrMagnitude(targetStagePos - this.transform.position) < 0.4f ? true : false;
+        }
+
+    }
+
+    /// <summary>
+    /// 目的地を設定する関数
+    /// </summary>
+    /// <param name="pm"> 確率マップからプレイヤーがいる確率の高い座標を選択するためのインスタンス </param>
+    /// <param name="stageList"> 保存している確率マップを取り出す用のリスト </param>
+    public void SelectTarget(ProbabilityMap pm, ref List<Stage> stageList)
+    {
+        // 中継地点が設定されている場合、中継地点に到着したので中継地点を初期化
+        if (relayStagePos != Vector3.zero)
+        {
+            relayStagePos = Vector3.zero;
+            return;
+        }
+        // 中継地点が設定されていない場合、目的地に到着したので次の目的地を設定
+        else
+        {
+            // 次の目的地を設定
+            targetStage = pm.Sort_Prob(stageList, this);
+
+            // 次の目的地の座標を設定
+            targetStagePos = new Vector3(targetStage.obj.transform.position.x, targetStage.obj.transform.position.y + 1, targetStage.obj.transform.position.z);
+
+            wp.Initialize();
+
+            //
+            MoveFlag = true;
+
+            SetStageID(targetStage.id);
+        }
+
+        
+
+        /*
+        targetPosStk.Pop();
+
+        if (targetPosStk.Count == 0)
+        {
+            //Debug.Log("Select Target");
+
+            targetStage = pm.Sort_Prob(stageList);
+
+            Vector3 targetPos = new Vector3(targetStage.obj.transform.position.x, targetStage.obj.transform.position.y + 1, targetStage.obj.transform.position.z);
+            //targetPos = targetPos + (targetPos - this.transform.position).normalized / 2;
+
+            targetPosStk.Push(targetPos);
+            //GameObject.FindWithTag("Finish").transform.position = targetPos;
+            //Debug.Log(targetPos);
+            wp.Initialize();
+
+        }
+        */
+    }
+
+
+    /// <summary>
+    /// 障害物があるかを探索
+    /// </summary>
+    /// <param name="wall">  </param>
+    /// <param name="start_to_end"> 目的地と現在地までの正規化ベクトル </param>
+    /// <returns></returns>
+    public bool obst(GameObject wall, Vector2 start_to_end)
+    {
+        
+
+        Vector2 normal_start_to_end = start_to_end.normalized;
+
+        // 壁と現在地のベクトルと正規化ベクトル
+        Vector2 start_to_wall = new Vector2(wall.transform.position.x - this.transform.position.x, wall.transform.position.z - this.transform.position.z);
+        Vector2 normal_start_to_wall = start_to_wall.normalized;
+
+        // 目的地と壁のベクトルと正規化ベクトル
+        Vector2 end_to_wall = new Vector2(wall.transform.position.x - targetStagePos.x, wall.transform.position.z - targetStagePos.z);
+        Vector2 normal_end_to_wall = end_to_wall.normalized;
+
+        // 
+        float dist_projection = normal_start_to_wall.x * normal_start_to_end.y - normal_start_to_end.x * normal_start_to_wall.y;
+        float angle = Vector2.Angle(normal_start_to_end, normal_start_to_wall);
+
+        //Debug.Log(angle);
+        //Debug.Log(dist_projection);
+        //if (Mathf.Abs(dist_projection) < 0.1f)
+        if (angle < 20f && start_to_end.magnitude > start_to_wall.magnitude) 
+        {
+            /*
+            float dot01 = start_to_wall.x * normal_start_to_end.x + start_to_wall.y * normal_start_to_end.y;
+            float dot02 = end_to_wall.x * normal_start_to_end.x + end_to_wall.y * normal_start_to_end.y;
+
+            if (dot01 * dot02 <= 0.0f)
+            {
+                return true;
+            }
+            */
+            
+
+            //Debug.Log("obst");
+            //Debug.Log(start_to_wall.magnitude);
+            //Debug.Log(end_to_wall.magnitude);
+            if (start_to_wall.magnitude < 10f || end_to_wall.magnitude < 2f)
+            {
+                //Debug.Log("found obst : " + wall.transform.position);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+
+    /// <summary>
+    /// 目的地までの直線上に障害物があるかを探索し、中継地点を選択
+    /// </summary>
+    /// <param name="forward"></param>
+    /// <param name="walls"></param>
+    public void SelectTarget_in_Obst(Vector2 forward, List<Wall> walls)
+    {
+        // 障害物を感知していない場合
+        //if (ObstFlag == false)
+        // {
+
+        // 目的地と現在地までのベクトルを計算し正規化
+        Vector2 start_to_end = new Vector2(targetStagePos.x - this.transform.position.x, targetStagePos.z - this.transform.position.z);
+        Vector2 normal_start_to_end = start_to_end.normalized;
+
+        //Vector3 targetPos;
+
+        // 障害物を検索
+        //foreach (Wall wall in walls)
+        for (int i = 0; i < walls.Count; i++)
+        {
+            /*
+            if (this.transform.position.x * forward.x > walls[i].obj.transform.position.x * forward.x || this.transform.position.z * forward.y > walls[i].obj.transform.position.z * forward.y)
+            {
+                States = "Search";
+                continue;
+            }
+            */
+
+            //Debug.Log("obst");
+
+            // 目的地までの直線に障害物があれば
+            //if (angle <= 10f && wallDirection.sqrMagnitude < (targetPosStk.Peek() - this.transform.position).sqrMagnitude)
+            if (obst(walls[i].obj, start_to_end) == true)
+            {
+                //Debug.Log("found obst");
+                //walls[i].color = new Color(0.0f, 1.0f, 0.0f, 0.0f);
+
+                // 壁と現在地との距離
+                wallDirection = walls[i].obj.transform.position - this.transform.position;
+
+                // 中継地点を探す
+                if(relayStagePos == Vector3.zero)
+                {
+                    relayStagePos = wp.SearchWayPoint(wallDirection, targetStagePos, this.transform.position, walls, this);
+                }
+                //targetPos = wp.SearchWayPoint(wallDirection, targetPosStk.Peek(), this.transform.position);
+                //targetPos = targetPos + (targetPos - this.transform.position).normalized / 2;
+
+                //targetPosStk.Push(targetPos);
+                //GameObject.FindWithTag("Finish").transform.position = targetPos;
+                //Debug.Log(targetPos);
+                //states = "Obst";
+
+
+                //ObstFlag = true;
+                //Debug.Log(minCnt);
+                break;
+            }
+
+        }
+
+    }
+
+    /// <summary>
+    /// プレイヤーを探索
+    /// </summary>
+    /// <param name="playerPos"> プレイヤーの座標 </param>
+    public void SearchPlayer(Vector3 playerPos, float length, float range)
+    {
+        // プレイヤーと敵の間のベクトルを計算
+        playerDirection = playerPos - this.transform.position;
+
+        // プレイヤーと敵の間の距離が一定より近い場合
+        if( playerDirection.sqrMagnitude < length)
+        {
+            // ベクトルから角度を計算
+            var angle = Vector3.Angle(this.transform.forward, playerDirection);
+
+            // プレイヤーが扇形の視界に入っている場合
+            if (angle <= range)
+            {
+                // プレイヤーと敵との間に障害物があるかを判定
+                bool obstPlayerFlag = false;
+                foreach(Wall s in GameMgr.wallList)
+                {
+                    Vector3 stageDirection = s.obj.transform.position - this.transform.position;
+                    var stageAngle = Vector3.Angle(playerDirection, stageDirection);
+
+                    if (stageAngle <= range && stageDirection.sqrMagnitude < playerDirection.sqrMagnitude)
+                    {
+                        Vector3 d = this.transform.position + Vector3.Project(stageDirection, playerDirection);
+                        if ((d - s.obj.transform.position).sqrMagnitude < 1f)
+                        {
+                            obstPlayerFlag = true;
+                            break;
+                        }
+                    }
+                }
+
+                if(obstPlayerFlag == false)
+                {
+                    // 次の目的地をプレイヤーの座標に設定
+                    //targetPosStk.Clear();
+                    //targetPosStk.Push(playerPos);
+                    targetStagePos = playerPos;
+
+                    // 攻撃ステートに設定
+                    //dangerFlag = true;
+                    //states = GameMgr.DANGER_STATES;
+                    SetStates(StateType.Danger);
+
+                    speed = dangerSpeed;
+                }
+            }
+        }
+
+        
+    }
+
+
+    /// <summary>
+    /// 弾を発射する関数
+    /// </summary>
+    /// <param name="angleBase"></param>
+    /// <param name="angleRange"></param>
+    /// <param name="speed"></param>
+    /// <param name="count"></param>
+    private void ShootNWay(float angleBase, float angleRange, float speed, int count)
+    {
+        var pos = transform.position + transform.forward; // プレイヤーの位置
+        var rot = transform.rotation; // プレイヤーの向き
+
+        // 弾を複数発射する場合
+        if (1 < count)
+        {
+            // 発射する回数分ループする
+            for (int i = 0; i < count; ++i)
+            {
+                // 弾の発射角度を計算する
+                var angle = angleBase +
+                    angleRange * ((float)i / (count - 1) - 0.5f);
+
+                // 発射する弾を生成する
+                //var shot = Instantiate(shotPrefab, pos, rot);
+                var shot = EnemyShot.Add(this.gameObject.tag, pos.x, pos.y, pos.z);
+
+                // 弾を発射する方向と速さを設定する
+                shot.Init(angle, speed, gm);
+
+                ///shot.UpdateShot();
+            }
+        }
+        // 弾を 1 つだけ発射する場合
+        else if (count == 1)
+        {
+            // 発射する弾を生成する
+            //var shot = Instantiate(shotPrefab, pos, rot);
+            var shot = EnemyShot.Add(this.gameObject.tag, pos.x, pos.y, pos.z);
+
+            // 弾を発射する方向と速さを設定する
+            shot.Init(angleBase, speed, gm);
+
+            //shot.UpdateShot();
+        }
+    }
+
+    
+    /// <summary>
+    /// 弾を発射する関数
+    /// </summary>
+    /// <param name="playerPos"></param>
+    public void Shoot(Vector3 playerPos)
+    {
+        // 弾の発射タイミングを管理するタイマーを更新する
+        m_shotTimer += Time.deltaTime;
+
+        // まだ弾の発射タイミングではない場合は、ここで処理を終える
+        if (m_shotTimer < m_shotInterval) return;
+        
+        // 弾を発射する
+        ShootNWay(GetAngle(this.transform.position, playerPos), m_shotAngleRange, m_shotSpeed, m_shotCount);
+
+        // 弾の発射タイミングを管理するタイマーをリセットする
+        m_shotTimer = 0;
+    }
+
+
+    int to_binary(float num)
+    {
+        return num > 0 ? 1 : -1;
+    }
+
+    public void FollowUI(GameObject UI, Vector3 offset)
+    {
+        UI.transform.localPosition = this.transform.localPosition + offset;
+    }
+    
+
+    /*===================================================*/
+    // 更新処理
+
+    //public void UpdateEnemy(ProbabilityMap pm, List<Stage> stageList, List<Wall> wallList, Vector3 playerPos)
+    void Update()
+    {
+        if (startFlag == false) return;
+
+        // 障害物にぶつかっている時間を計測
+        if (ObstFlag) obstTime += Time.deltaTime;
+
+        // 障害物に一定時間ぶつかっていた場合は障害物があると判定
+        if (obstTime > 2.0f)
+        {
+            relayStagePos = Vector3.zero;
+            obstTime = 0;
+            ObstFlag = false;
+
+            // 次の目的地を設定
+            targetStage = pm.Sort_Prob(GameMgr.stageList, this);
+
+            // 次の目的地の座標を設定
+            targetStagePos = new Vector3(targetStage.obj.transform.position.x, targetStage.obj.transform.position.y + 1, targetStage.obj.transform.position.z);
+
+            // ウェイポイントを初期化
+            wp.Initialize();
+
+            //
+            MoveFlag = true;
+            //return true;
+        }
+
+        // 確率マップを更新
+        pm.UpdateProbabilityMap(ref GameMgr.stageList, this.transform.forward, this.transform.position);
+
+
+        switch (states)
+        {
+            // 通常ステートの場合
+            case StateType.Normal:
+                
+                // 通常の巡回
+                Patrol(normalEyeSightLength, normalEyeSightRange);
+
+                // 注意・警告のUIを非表示にする
+                dangerFlag = false;
+                cautionFlag = false;
+
+                break;
+            
+            // 注意ステートの場合
+            case StateType.Caution:
+
+                // 注意ステートの巡回
+                //Patrol(cautionEyeSightLength, cautionEyeSightRange);
+                CautionPatrol(cautionEyeSightLength, cautionEyeSightRange);
+
+
+                // 注意のUIを表示する
+                dangerFlag = false;
+                cautionFlag = true;
+
+                ctm.UpdateCautionTime(this);
+
+                break;
+            
+            // 警告ステートの場合
+            case StateType.Danger:
+
+                // プレイヤーを攻撃する
+                Attack();
+
+                // 警告のUIを表示する
+                dangerFlag = true;
+                cautionFlag = false;
+
+                break;
+        }
+
+        dangerUI.SetActive(dangerFlag);
+        cautionUI.SetActive(cautionFlag);
+
+        gm.UpdateAlertUIStates();
+
+        forward.x = to_binary(this.transform.forward.x);
+        forward.y = to_binary(this.transform.forward.y);
+
+        // 障害物があった場合に回避するためのポイントを検索し設定
+        SelectTarget_in_Obst(forward, GameMgr.wallList);
+
+        //Coloring_Target(ref targetStage, new Color(targetStage.material.color.r, 1.0f, targetStage.material.color.b, 0.0f));
+
+        MoveTarget();
+
+        FollowUI(cautionUI, offset);
+        FollowUI(dangerUI, offset);
+        if(keyUIFlag == true)
+        {
+            FollowUI(keyUI, keyOffset);
+        }
+
+        //Debug.Log(targetStagePos);
+
+        /*
+        target.transform.position = targetStagePos;
+        relay.transform.position = relayStagePos;
+        */
+    }
+
+    /*===================================================*/
+
+    public void Attack()
+    {
+        if ((player.transform.position - transform.position).sqrMagnitude > dangerEyeSightLength)
+        {
+            //dangerFlag = false;
+            SetStates(StateType.Caution);
+            speed = normalSpeed;
+        }
+
+        // プレイヤーの位置に移動できているか
+        if (IsReachTarget(ref GameMgr.stageList))
+        {
+            //wp.Initialize();
+            //MoveFlag = false;
+            if (relayStagePos != Vector3.zero)
+            {
+                relayStagePos = Vector3.zero;
+            }
+            else
+            {
+                // 目的地を更新
+                //PushTargetPosStk(player.transform.position);
+                targetStagePos = player.transform.position;
+            }
+        }
+
+        // プレイヤーの方向を向く
+        LookPlayer();
+
+        // プレイヤーに向かって弾を打つ
+        Shoot(player.transform.position);
+
+    }
+
+    public void CautionPatrol(float length, float range)
+    {
+        // プレイヤーの位置に移動できているか
+        if (IsReachTarget(ref GameMgr.stageList))
+        {
+            //wp.Initialize();
+            //MoveFlag = false;
+            if (relayStagePos != Vector3.zero)
+            {
+                relayStagePos = Vector3.zero;
+            }
+            else
+            {
+                // 目的地を更新
+                //PushTargetPosStk(player.transform.position);
+                targetStagePos = player.transform.position;
+            }
+        }
+
+        // プレイヤーの方向を向く
+        //LookPlayer();
+
+        // プレイヤーを検索
+        SearchPlayer(player.transform.position, length, range);
+
+    }
+
+    public void Patrol(float length, float range)
+    {
+        // 目的地に移動できているか
+        if (IsReachTarget(ref GameMgr.stageList))
+        {
+            //MoveFlag = false;
+            if (relayStagePos != Vector3.zero)
+            {
+                relayStagePos = Vector3.zero;
+            }
+            else
+            {
+                // 新しい目的地を設定
+                SelectTarget(pm, ref GameMgr.stageList);
+            }
+
+        }
+        // プレイヤーを探索
+        SearchPlayer(player.transform.position, length, range);
+    }
+
+
+    /*===================================================*/
+    // あたり判定の処理
+
+
+    void OnCollisionEnter(Collision col)
+    {
+        // 弾にあたったら
+        if (col.gameObject.tag == "Shot")
+        {
+            //Debug.Log("ID :" + ID);
+            //gm.RemoveEnemy_at_elist(ID);
+            //Debug.Log("e_list :" + gm.e_list.Count);
+
+            gm.RemoveEnemy(this);
+
+            foreach(Enemy e in GameMgr.enemyList)
+            {
+                if((this.transform.position - e.transform.position).sqrMagnitude < normalEyeSightLength)
+                {
+                    //e.SetDangerFlag(true);
+                    targetStagePos = player.transform.position;
+                    e.SetStates(StateType.Caution);
+                }
+            }
+
+            dangerUI.SetActive(false);
+            cautionUI.SetActive(false);
+            if (keyUIFlag == true)
+            {
+                keyUI.SetActive(false);
+                foreach (Wall w in GameMgr.wallList)
+                {
+                    if (w.gateFlag)
+                    {
+                        w.obj.SetActive(false);
+                    }
+                }
+                dp.SetPurposeText("人質の場所に向かおう");
+                Debug.Log("Gate Open");
+            }
+
+            Vanish();
+        }
+
+    }
+
+    void OnTriggerStay(Collider col)
+    {
+        if (col.gameObject.tag == "WallCol")
+        {
+            ObstFlag = true;
+        }
+    }
+
+    void OnTriggerExit(Collider col)
+    {
+        if (col.gameObject.tag == "WallCol")
+        {
+            ObstFlag = false;
+            obstTime = 0;
+        }
+    }
+
+    /*===================================================*/
+
+}
