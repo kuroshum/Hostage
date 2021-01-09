@@ -91,7 +91,7 @@ public class EnemyShot : Token
 
     void OnCollisionEnter(Collision col)
     {
-        if (col.gameObject.tag == "Player" || col.gameObject.tag == "PlayerShot")
+        if (col.gameObject.tag == "Player" || col.gameObject.tag == "PlayerShot" || col.gameObject.tag == "Decoy")
         {
             Vanish();
         }
@@ -109,7 +109,7 @@ public class EnemyShot : Token
             Vanish();
         }
 
-        if (col.gameObject.tag == "Player" || col.gameObject.tag == "Wall")
+        if (col.gameObject.tag == "Player" || col.gameObject.tag == "Wall" || col.gameObject.tag == "Decoy")
         {
             //sound.Play();
             gm.StartExploson(col, 1f);

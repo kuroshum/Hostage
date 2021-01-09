@@ -338,20 +338,28 @@ public class AnahoriDungeon : MonoBehaviour
         // ROOMNUMの数だけ部屋と障害物を作成
         for (int i = 2; i < ROOM_NUM+2; i++)
         {
-            // 作成する部屋の半径サイズを設定
-            len = rnd.Next(minSize, maxSize);
-
-            // 部屋を作成する座標を設定
-            startPos = SearchPos(len, i, init_len, ROOM_NUM);
-
-            // 部屋を作成
-            tmp_room = MakeRoom(startPos, i, len);
-
             if(i != ROOM_NUM + 1)
             {
+                // 作成する部屋の半径サイズを設定
+                len = rnd.Next(minSize, maxSize);
+
+                // 部屋を作成する座標を設定
+                startPos = SearchPos(len, i, init_len, ROOM_NUM);
+                
+                // 部屋を作成
+                tmp_room = MakeRoom(startPos, i, len);
+                
                 // 部屋に障害物を作成
                 MakeObst(len, tmp_room);
                 //Debug.Log("MakeRoom");
+            }
+            else
+            {
+                // 部屋を作成する座標を設定
+                startPos = SearchPos(minSize, i, init_len, ROOM_NUM);
+                
+                // 部屋を作成
+                tmp_room = MakeRoom(startPos, i, minSize);
             }
         }
 

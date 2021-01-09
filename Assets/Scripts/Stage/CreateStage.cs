@@ -307,7 +307,7 @@ public class CreateStage : MonoBehaviour {
         string StageFile = Application.dataPath + "/" + "Resources" + "/" + "stage4.txt";
         ReadWrite.ListWrite(StageFile, GameMgr.mapList, max, max);
 
-        Debug.Log("Genarate");
+        //Debug.Log("Genarate");
     }
 
     public void DeleteObj(string objName) {

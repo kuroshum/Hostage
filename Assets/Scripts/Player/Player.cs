@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Linq;
 
 public class Player : Token
 {
@@ -43,9 +44,21 @@ public class Player : Token
     [SerializeField]
     private int shotNum;
 
+    private int maxDecoyNum = 3;
+    public  int GetMaxDecoyNum() { return maxDecoyNum; }
+    [SerializeField]
+    private int decoyNum;
+
     private LifeGauge lg;
 
     private PlayerShotGauge psg;
+
+    private DecoyGauge dg;
+
+    private Camera mainCamera;
+    private void SetMainCamera(Camera mainCamera) { this.mainCamera = mainCamera; }
+
+    private Vector3 currentPosition = Vector3.zero;
 
     //　HP表示用UI
     private GameObject HPUI;
@@ -55,7 +68,7 @@ public class Player : Token
     private bool startFlag;
     public void SetStartFlag(bool flag) { this.startFlag = flag; }
 
-    public static Player Add(int id, float move_speed, float apply_speed, GameMgr gm,  float x, float y, float z)
+    public static Player Add(int id, float move_speed, float apply_speed, GameMgr gm,  float x, float y, float z, Camera mainCamera)
     {
         // Enemyインスタンスの取得
         Player p = parent.Add(x, y, z);
@@ -71,6 +84,8 @@ public class Player : Token
 
         p.SetStartFlag(false);
 
+        p.SetMainCamera(mainCamera);
+
         return p;
     }
 
@@ -80,6 +95,11 @@ public class Player : Token
         shotNum = maxShotNum;
     }
 
+    public void InitilizeDecoyGauge(DecoyGauge dg)
+    {
+        this.dg = dg;
+        decoyNum = 1;
+    }
 
     public void InitilizeHp(LifeGauge lg)
     {
@@ -258,6 +278,27 @@ public class Player : Token
             }
         }
 
+        if (Input.GetMouseButtonDown(1))
+        {
+            if (decoyNum <= 0) return;
+
+            var ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+            var raycastHitList = Physics.RaycastAll(ray).ToList();
+            if (raycastHitList.Any())
+            {
+                var distance = Vector3.Distance(mainCamera.transform.position, raycastHitList.First().point);
+                var mousePosition = new Vector3(Input.mousePosition.x, Input.mousePosition.y, distance);
+
+                currentPosition = mainCamera.ScreenToWorldPoint(mousePosition);
+                currentPosition.y = 0;
+            }
+            Decoy decoy = Decoy.Add(GameMgr.decoyList.Count, gm, currentPosition);
+            decoy.InitilizeHp();
+            GameMgr.decoyList.Add(decoy);
+            decoyNum--;
+            dg.SetDecoyGauge(decoyNum);
+        }
+
     }
 
     void OnCollisionEnter(Collision col)
@@ -274,9 +315,17 @@ public class Player : Token
     {
         if (col.gameObject.tag == "ShotItem")
         {
-            shotNum += 2;
+            shotNum++;
             if (shotNum > maxShotNum) shotNum = maxShotNum;
             psg.SetShotGauge(shotNum);
+            col.gameObject.SetActive(false);
+        }
+
+        if(col.gameObject.tag == "DecoyItem")
+        {
+            decoyNum++;
+            if (decoyNum > maxDecoyNum) decoyNum = maxDecoyNum;
+            dg.SetDecoyGauge(decoyNum);
             col.gameObject.SetActive(false);
         }
     }

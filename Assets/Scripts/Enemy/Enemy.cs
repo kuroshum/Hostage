@@ -67,15 +67,6 @@ public class Enemy : Token
     private ProbabilityMap pm;
     private void SetProbabilityMap(ProbabilityMap pm) { this.pm = pm; }
 
-    /*
-    private Stack<Vector3> targetPosStk;
-    public void PushTargetPosStk(Vector3 target)
-    {
-        targetPosStk.Push(target);
-        MoveFlag = false;
-    }
-    */
-
     /// <summary>
     /// シーン上にあるウェイポイント
     /// </summary>
@@ -96,21 +87,12 @@ public class Enemy : Token
     /// </summary>
     public float obstTime;
 
-    public bool MoveFlag;
+    [SerializeField]
+    private bool moveFlag;
 
     public bool GetObstFlag() { return ObstFlag; }
-    public bool GetMoveFlag() { return MoveFlag; }
+    public bool GetMoveFlag() { return moveFlag; }
 
-
-    //public void SetTargetPos(Enemy e) { targetPos = e.transform.position; }
-
-    /*
-    [SerializeField]
-    private GameObject target;
-
-    [SerializeField]
-    private GameObject relay;
-    */
 
     public static float normalEyeSightRange = 50f;
     public static float cautionEyeSightRange = 80f;
@@ -166,6 +148,13 @@ public class Enemy : Token
     private bool startFlag;
     public void SetStartFlag(bool flag) { this.startFlag = flag; }
 
+    private bool decoyFlag;
+
+    private Vector3 decoyPos;
+
+    private Decoy decoy;
+
+
     [SerializeField]
     private StateType states;
     public StateType GetStates() { return states; }
@@ -193,21 +182,17 @@ public class Enemy : Token
         return e;
     }
 
-    //public void InitMgrTarget(float speed, Vector3 InitTargetPos, Player p)
     public void InitMgrTarget(float speed, Player p, bool keyUIFlag, DisplayPurpose dp)
     {
-        //targetPosStk = new Stack<Vector3>();
-        //targetPosStk = new Stack<Vector3>();
-        //targetPosStk.Push(InitTargetPos);
-        //targetStagePos = InitTargetPos;
         relayStagePos = Vector3.zero;
 
 
-        this.MoveFlag = true;
+        this.moveFlag = false;
 
         this.speed = speed;
         normalSpeed = speed;
         dangerSpeed = speed * 2;
+
         //
         wp = this.gameObject.GetComponent<WayPoint>();
         wp.Initialize();
@@ -228,10 +213,8 @@ public class Enemy : Token
         this.dp = dp;
 
         startFlag = false;
-        /*
-        target = Instantiate(target, Vector3.zero, Quaternion.identity);
-        relay = Instantiate(relay, Vector3.zero, Quaternion.identity);
-        */
+
+        decoyFlag = false;
     }
 
     public void InitilizeUI()
@@ -257,7 +240,7 @@ public class Enemy : Token
         ctm.SetTime(5f);
     }
 
-    public void Initilize_Shot()
+    public void InitilizeShot()
     {
         // 管理オブジェクトを生成
         EnemyShot.parent = new TokenMgr<EnemyShot>("EnemyShot", SHOT_NUM);
@@ -265,45 +248,26 @@ public class Enemy : Token
 
     public void LookPlayer()
     {
-
-        //Debug.Log(stages[tmpStageColorsIndex[0]]);
-        //Quaternion rot = Quaternion.LookRotation(targetPosStk.Peek() - this.transform.position);
         Quaternion rot = Quaternion.LookRotation(player.transform.position - this.transform.position);
         this.transform.rotation = Quaternion.Lerp(this.transform.rotation, rot, speed / 30);
-
-
     }
 
     public void LookTarget(Vector3 targetPos)
     {
-
-        //Debug.Log(stages[tmpStageColorsIndex[0]]);
-        //Quaternion rot = Quaternion.LookRotation(targetPosStk.Peek() - this.transform.position);
-        //Quaternion rot = Quaternion.LookRotation(targetStagePos - this.transform.position);
         Quaternion rot = Quaternion.LookRotation(targetPos - this.transform.position);
-        if (Vector3.Angle(rot.eulerAngles, this.transform.rotation.eulerAngles) > 1f)
+        if (Vector3.Angle(this.transform.forward, (targetPos - this.transform.position).normalized) > 2f)
         {
-            this.transform.rotation = Quaternion.Lerp(this.transform.rotation, rot, speed/20);
-            //return true;
+            this.transform.rotation = Quaternion.Lerp(this.transform.rotation, rot, speed / 30);
         }
         else
         {
-            MoveFlag = true;
-            //return false;
+            if (decoy == null || decoy.GetIsDeath() != false)
+            {
+                moveFlag = true;
+            }
+
         }
 
-
-    }
-
-    // 指定された角度（ 0 ～ 360 ）をベクトルに変換して返す
-    public Vector3 GetDirection(float angle)
-    {
-        return new Vector3
-        (
-            Mathf.Cos(angle * Mathf.Deg2Rad),
-            0,
-            Mathf.Sin(angle * Mathf.Deg2Rad)
-        );
     }
 
     // 指定された 2 つの位置から角度を求めて返す
@@ -322,32 +286,17 @@ public class Enemy : Token
         {
             targetPos = relayStagePos;
         }
-        //if (!Look_Target())
-        //{
+
         LookTarget(targetPos);
-        //velocity = (targetPosStk.Peek() - this.transform.position).normalized * speed;
-        //velocity = (targetStagePos - this.transform.position).normalized * speed;
-        if (MoveFlag == true)
+
+        if (moveFlag == true)
         {
             velocity = (targetPos - this.transform.position).normalized * speed;
             transform.position += velocity * Time.deltaTime;
         }
 
-        //transform.position = Vector3.MoveTowards(transform.position, targetPosStk.Peek(), speed * Time.deltaTime);
-        //}
-
     }
     
-    public void Coloring_Target(ref Stage stage, Color targetColor)
-    {
-        stage.material.SetColor("_Color", targetColor);
-    }
-
-    public void ColoringTarget(ref Wall wall, Color targetColor)
-    {
-        wall.obj.GetComponent<Material>().SetColor("_Color", targetColor);
-    }
-
     /// <summary>
     /// 目的地に到達できているかを確認する関数
     /// </summary>
@@ -355,22 +304,9 @@ public class Enemy : Token
     /// <returns></returns>
     public bool IsReachTarget(ref List<Stage> stageList)
     {
-        /*
-        if (targetPosStk.Count==0)
-        {
-            //Debug.Log("not set to target");
-            return false;
-        }
-        */
-
-        //Coloring_Target(ref stageList, new Color(stageList[0].material.color.r, 0.0f, stageList[0].material.color.b, 0.0f));
-        //return Vector3.SqrMagnitude(targetPosStk.Peek() - this.transform.position) < 0.4f ? true : false;
-
         // 中継地点を設定している場合
         if(relayStagePos != Vector3.zero)
         {
-            //Debug.Log(relayStagePos);
-            //Debug.Log(this.transform.position);
             return Vector3.SqrMagnitude(relayStagePos - this.transform.position) < 0.4f ? true : false;
         }
         // 中継地点が設定されていない（目的地までに障害物が無い）場合
@@ -406,32 +342,11 @@ public class Enemy : Token
             wp.Initialize();
 
             //
-            MoveFlag = true;
+            moveFlag = false;
 
             SetStageID(targetStage.id);
         }
 
-        
-
-        /*
-        targetPosStk.Pop();
-
-        if (targetPosStk.Count == 0)
-        {
-            //Debug.Log("Select Target");
-
-            targetStage = pm.Sort_Prob(stageList);
-
-            Vector3 targetPos = new Vector3(targetStage.obj.transform.position.x, targetStage.obj.transform.position.y + 1, targetStage.obj.transform.position.z);
-            //targetPos = targetPos + (targetPos - this.transform.position).normalized / 2;
-
-            targetPosStk.Push(targetPos);
-            //GameObject.FindWithTag("Finish").transform.position = targetPos;
-            //Debug.Log(targetPos);
-            wp.Initialize();
-
-        }
-        */
     }
 
 
@@ -443,8 +358,6 @@ public class Enemy : Token
     /// <returns></returns>
     public bool obst(GameObject wall, Vector2 start_to_end)
     {
-        
-
         Vector2 normal_start_to_end = start_to_end.normalized;
 
         // 壁と現在地のベクトルと正規化ベクトル
@@ -453,34 +366,14 @@ public class Enemy : Token
 
         // 目的地と壁のベクトルと正規化ベクトル
         Vector2 end_to_wall = new Vector2(wall.transform.position.x - targetStagePos.x, wall.transform.position.z - targetStagePos.z);
-        Vector2 normal_end_to_wall = end_to_wall.normalized;
 
         // 
-        float dist_projection = normal_start_to_wall.x * normal_start_to_end.y - normal_start_to_end.x * normal_start_to_wall.y;
         float angle = Vector2.Angle(normal_start_to_end, normal_start_to_wall);
 
-        //Debug.Log(angle);
-        //Debug.Log(dist_projection);
-        //if (Mathf.Abs(dist_projection) < 0.1f)
         if (angle < 20f && start_to_end.magnitude > start_to_wall.magnitude) 
         {
-            /*
-            float dot01 = start_to_wall.x * normal_start_to_end.x + start_to_wall.y * normal_start_to_end.y;
-            float dot02 = end_to_wall.x * normal_start_to_end.x + end_to_wall.y * normal_start_to_end.y;
-
-            if (dot01 * dot02 <= 0.0f)
-            {
-                return true;
-            }
-            */
-            
-
-            //Debug.Log("obst");
-            //Debug.Log(start_to_wall.magnitude);
-            //Debug.Log(end_to_wall.magnitude);
             if (start_to_wall.magnitude < 10f || end_to_wall.magnitude < 2f)
             {
-                //Debug.Log("found obst : " + wall.transform.position);
                 return true;
             }
             else
@@ -502,37 +395,17 @@ public class Enemy : Token
     /// <param name="walls"></param>
     public void SelectTarget_in_Obst(Vector2 forward, List<Wall> walls)
     {
-        // 障害物を感知していない場合
-        //if (ObstFlag == false)
-        // {
-
         // 目的地と現在地までのベクトルを計算し正規化
         Vector2 start_to_end = new Vector2(targetStagePos.x - this.transform.position.x, targetStagePos.z - this.transform.position.z);
         Vector2 normal_start_to_end = start_to_end.normalized;
-
-        //Vector3 targetPos;
 
         // 障害物を検索
         //foreach (Wall wall in walls)
         for (int i = 0; i < walls.Count; i++)
         {
-            /*
-            if (this.transform.position.x * forward.x > walls[i].obj.transform.position.x * forward.x || this.transform.position.z * forward.y > walls[i].obj.transform.position.z * forward.y)
-            {
-                States = "Search";
-                continue;
-            }
-            */
-
-            //Debug.Log("obst");
-
             // 目的地までの直線に障害物があれば
-            //if (angle <= 10f && wallDirection.sqrMagnitude < (targetPosStk.Peek() - this.transform.position).sqrMagnitude)
             if (obst(walls[i].obj, start_to_end) == true)
             {
-                //Debug.Log("found obst");
-                //walls[i].color = new Color(0.0f, 1.0f, 0.0f, 0.0f);
-
                 // 壁と現在地との距離
                 wallDirection = walls[i].obj.transform.position - this.transform.position;
 
@@ -541,17 +414,6 @@ public class Enemy : Token
                 {
                     relayStagePos = wp.SearchWayPoint(wallDirection, targetStagePos, this.transform.position, walls, this);
                 }
-                //targetPos = wp.SearchWayPoint(wallDirection, targetPosStk.Peek(), this.transform.position);
-                //targetPos = targetPos + (targetPos - this.transform.position).normalized / 2;
-
-                //targetPosStk.Push(targetPos);
-                //GameObject.FindWithTag("Finish").transform.position = targetPos;
-                //Debug.Log(targetPos);
-                //states = "Obst";
-
-
-                //ObstFlag = true;
-                //Debug.Log(minCnt);
                 break;
             }
 
@@ -563,7 +425,7 @@ public class Enemy : Token
     /// プレイヤーを探索
     /// </summary>
     /// <param name="playerPos"> プレイヤーの座標 </param>
-    public void SearchPlayer(Vector3 playerPos, float length, float range)
+    public void SearchPlayer(Vector3 playerPos, float length, float range, Decoy decoy)
     {
         // プレイヤーと敵の間のベクトルを計算
         playerDirection = playerPos - this.transform.position;
@@ -595,19 +457,20 @@ public class Enemy : Token
                     }
                 }
 
+                // プレイヤーと敵との間に障害物がない場合
                 if(obstPlayerFlag == false)
                 {
                     // 次の目的地をプレイヤーの座標に設定
-                    //targetPosStk.Clear();
-                    //targetPosStk.Push(playerPos);
                     targetStagePos = playerPos;
 
+                    relayStagePos = Vector3.zero;
+
                     // 攻撃ステートに設定
-                    //dangerFlag = true;
-                    //states = GameMgr.DANGER_STATES;
                     SetStates(StateType.Danger);
 
                     speed = dangerSpeed;
+
+                    this.decoy = decoy;
                 }
             }
         }
@@ -639,26 +502,21 @@ public class Enemy : Token
                     angleRange * ((float)i / (count - 1) - 0.5f);
 
                 // 発射する弾を生成する
-                //var shot = Instantiate(shotPrefab, pos, rot);
                 var shot = EnemyShot.Add(this.gameObject.tag, pos.x, pos.y, pos.z);
 
                 // 弾を発射する方向と速さを設定する
                 shot.Init(angle, speed, gm);
 
-                ///shot.UpdateShot();
             }
         }
         // 弾を 1 つだけ発射する場合
         else if (count == 1)
         {
             // 発射する弾を生成する
-            //var shot = Instantiate(shotPrefab, pos, rot);
             var shot = EnemyShot.Add(this.gameObject.tag, pos.x, pos.y, pos.z);
 
             // 弾を発射する方向と速さを設定する
             shot.Init(angleBase, speed, gm);
-
-            //shot.UpdateShot();
         }
     }
 
@@ -722,8 +580,7 @@ public class Enemy : Token
             wp.Initialize();
 
             //
-            MoveFlag = true;
-            //return true;
+            moveFlag = false;
         }
 
         // 確率マップを更新
@@ -748,9 +605,7 @@ public class Enemy : Token
             case StateType.Caution:
 
                 // 注意ステートの巡回
-                //Patrol(cautionEyeSightLength, cautionEyeSightRange);
                 CautionPatrol(cautionEyeSightLength, cautionEyeSightRange);
-
 
                 // 注意のUIを表示する
                 dangerFlag = false;
@@ -764,7 +619,22 @@ public class Enemy : Token
             case StateType.Danger:
 
                 // プレイヤーを攻撃する
-                Attack();
+                if (decoy != null && decoy.GetIsDeath() == false)
+                {
+                    moveFlag = false;
+                    DecoyAttack(decoy.transform.position);
+                }
+                else
+                {
+                    if (decoy != null && decoy.GetIsDeath() == true)
+                    {
+                        SetStates(StateType.Normal);
+                        speed = normalSpeed;
+                        break;
+                    }
+                    moveFlag = true;
+                    Attack(player.transform.position);
+                }
 
                 // 警告のUIを表示する
                 dangerFlag = true;
@@ -776,15 +646,11 @@ public class Enemy : Token
         dangerUI.SetActive(dangerFlag);
         cautionUI.SetActive(cautionFlag);
 
-        gm.UpdateAlertUIStates();
-
         forward.x = to_binary(this.transform.forward.x);
         forward.y = to_binary(this.transform.forward.y);
 
         // 障害物があった場合に回避するためのポイントを検索し設定
         SelectTarget_in_Obst(forward, GameMgr.wallList);
-
-        //Coloring_Target(ref targetStage, new Color(targetStage.material.color.r, 1.0f, targetStage.material.color.b, 0.0f));
 
         MoveTarget();
 
@@ -795,30 +661,31 @@ public class Enemy : Token
             FollowUI(keyUI, keyOffset);
         }
 
-        //Debug.Log(targetStagePos);
-
-        /*
-        target.transform.position = targetStagePos;
-        relay.transform.position = relayStagePos;
-        */
     }
 
     /*===================================================*/
 
-    public void Attack()
+    public void DecoyAttack(Vector3 pos)
     {
-        if ((player.transform.position - transform.position).sqrMagnitude > dangerEyeSightLength)
+        // プレイヤーの方向を向く
+        LookTarget(pos);
+
+        // プレイヤーに向かって弾を打つ
+        Shoot(pos);
+    } 
+
+    public void Attack(Vector3 pos)
+    {
+        if ((pos - transform.position).sqrMagnitude > dangerEyeSightLength)
         {
             //dangerFlag = false;
-            SetStates(StateType.Caution);
+            SetStates(StateType.Normal);
             speed = normalSpeed;
         }
 
         // プレイヤーの位置に移動できているか
         if (IsReachTarget(ref GameMgr.stageList))
         {
-            //wp.Initialize();
-            //MoveFlag = false;
             if (relayStagePos != Vector3.zero)
             {
                 relayStagePos = Vector3.zero;
@@ -826,8 +693,7 @@ public class Enemy : Token
             else
             {
                 // 目的地を更新
-                //PushTargetPosStk(player.transform.position);
-                targetStagePos = player.transform.position;
+                targetStagePos = pos;
             }
         }
 
@@ -835,7 +701,7 @@ public class Enemy : Token
         LookPlayer();
 
         // プレイヤーに向かって弾を打つ
-        Shoot(player.transform.position);
+        Shoot(pos);
 
     }
 
@@ -844,8 +710,6 @@ public class Enemy : Token
         // プレイヤーの位置に移動できているか
         if (IsReachTarget(ref GameMgr.stageList))
         {
-            //wp.Initialize();
-            //MoveFlag = false;
             if (relayStagePos != Vector3.zero)
             {
                 relayStagePos = Vector3.zero;
@@ -853,16 +717,22 @@ public class Enemy : Token
             else
             {
                 // 目的地を更新
-                //PushTargetPosStk(player.transform.position);
                 targetStagePos = player.transform.position;
             }
         }
-
-        // プレイヤーの方向を向く
-        //LookPlayer();
-
+        foreach (Decoy d in GameMgr.decoyList)
+        {
+            if (d.GetIsDeath() == false)
+            {
+                SearchPlayer(d.transform.position, length, range, d);
+            }
+            else
+            {
+                decoyFlag = false;
+            }
+        }
         // プレイヤーを検索
-        SearchPlayer(player.transform.position, length, range);
+        SearchPlayer(player.transform.position, length, range, null);
 
     }
 
@@ -883,14 +753,24 @@ public class Enemy : Token
             }
 
         }
+        foreach(Decoy d in GameMgr.decoyList)
+        {
+            if (d.GetIsDeath() == false)
+            {
+                SearchPlayer(d.transform.position, length, range, d);
+            }
+            else
+            {
+                decoyFlag = false;
+            }
+        }
         // プレイヤーを探索
-        SearchPlayer(player.transform.position, length, range);
+        SearchPlayer(player.transform.position, length, range, null);
     }
 
 
     /*===================================================*/
     // あたり判定の処理
-
 
     void OnCollisionEnter(Collision col)
     {
