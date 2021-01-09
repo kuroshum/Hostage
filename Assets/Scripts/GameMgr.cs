@@ -42,7 +42,6 @@ public class GameMgr : MonoBehaviour
 
     private Text dangerUIText;
 
-
     [SerializeField]
     private GameObject keyUI;
 
@@ -268,8 +267,8 @@ public class GameMgr : MonoBehaviour
         int dangerCnt = 0;
         foreach(Enemy e in enemyList)
         {
-            if (e.GetCautionFlag()) cautionCnt++;
-            if (e.GetDangerFlag()) dangerCnt++;
+            if (e.GetCautionEnemyUIFlag()) cautionCnt++;
+            if (e.GetDangerUIFlag()) dangerCnt++;
         }
 
         if (dangerCnt > 0)

@@ -15,6 +15,9 @@ public class Enemy : Token
     private GameMgr gm;
     private void SetGmaeMgr(GameMgr gm) { this.gm = gm; }
 
+    /// <summary>
+    /// 敵のID
+    /// </summary>
     [SerializeField]
     private int ID;
     public void SetParam(int id) { ID = id; }
@@ -27,19 +30,33 @@ public class Enemy : Token
     public void SetStageID(int id) { stageID = id; }
     public int GetStageID() { return stageID; }
 
+    /// <summary>
+    /// 敵のスピード
+    /// </summary>
     public float speed;
 
+    /// <summary>
+    /// normalステートの場合の速度
+    /// </summary>
     private float normalSpeed;
+    /// <summary>
+    /// dangerステートの場合の速度
+    /// </summary>
     private float dangerSpeed;
 
     /// <summary>
-    /// 敵と壁間のベクトル
+    /// 壁の向き
     /// </summary>
     private Vector3 wallDirection;
-
+    /// <summary>
+    /// 目的地の方向
+    /// </summary>
     private Vector3 targetDirection;
+    /// <summary>
+    /// プレイヤーの方向
+    /// </summary>
     private Vector3 playerDirection;
-
+    
     /// <summary>
     /// 目的地のステージ
     /// </summary>
@@ -49,7 +66,7 @@ public class Enemy : Token
     /// </summary>
     private Vector3 targetStagePos;
     public void SetTargetStagePos(Vector3 pos) { targetStagePos = pos; }
-
+    
     /// <summary>
     /// 目的地に行くまでに障害物があった場合に中継する地点
     /// </summary>
@@ -71,37 +88,57 @@ public class Enemy : Token
     /// シーン上にあるウェイポイント
     /// </summary>
     public static WayPoint wp;
-
+    
     /// <summary>
     /// プレイヤーのインスタンス
     /// </summary>
     private Player player;
-
+    
     /// <summary>
     /// 障害物が進行方向にあるか
     /// </summary>
     private bool ObstFlag;
+    public bool GetObstFlag() { return ObstFlag; }
+    public bool GetMoveFlag() { return moveFlag; }
     
     /// <summary>
     /// 障害物にぶつかってからの時間
     /// </summary>
     public float obstTime;
 
+    /// <summary>
+    /// 移動するかどうかのフラグ
+    /// </summary>
     [SerializeField]
     private bool moveFlag;
 
-    public bool GetObstFlag() { return ObstFlag; }
-    public bool GetMoveFlag() { return moveFlag; }
+    /// <summary>
+    /// normalステートの場合の視界角度
+    /// </summary>
+    private float normalEyeSightRange = 50f;
+    /// <summary>
+    /// cautionステートの場合の視界角度
+    /// </summary>
+    private float cautionEyeSightRange = 80f;
+    /// <summary>
+    /// dangerステートの場合の視界角度
+    /// </summary>
+    private float dangerEyeSightRange = 100f;
 
-
-    public static float normalEyeSightRange = 50f;
-    public static float cautionEyeSightRange = 80f;
-    public static float dangerEyeSightRange = 100f;
-
-    public static float normalEyeSightLength = 20f;
-    public static float cautionEyeSightLength = 40f;
-    public static float dangerEyeSightLength = 60f;
-
+    /// <summary>
+    /// normalステートの場合の視界角度
+    /// </summary>
+    private float normalEyeSightLength = 20f;
+    public float GetNormalEyeSightLength() { return normalEyeSightLength; }
+    /// <summary>
+    /// cautionステートの場合の視界角度
+    /// </summary>
+    private float cautionEyeSightLength = 40f;
+    /// <summary>
+    /// dangerステートの場合の視界角度
+    /// </summary>
+    private float dangerEyeSightLength = 60f;
+    
     /// <summary>
     /// 速度
     /// </summary>
@@ -112,6 +149,9 @@ public class Enemy : Token
     /// </summary>
     private Vector2 forward;
 
+    /// <summary>
+    /// 初期弾数
+    /// </summary>
     [SerializeField]
     private int SHOT_NUM;
 
@@ -129,21 +169,24 @@ public class Enemy : Token
 
     
     [SerializeField]
-    private GameObject dangerUI;
+    private GameObject dangerEnemyUI;
 
     [SerializeField]
-    private GameObject cautionUI;
+    private GameObject cautionEnemyUI;
 
     [SerializeField]
-    private GameObject keyUI;
+    private GameObject keyEnemyUI;
 
-    private bool cautionFlag;
-    public bool GetCautionFlag() { return cautionFlag; }
+    private bool cautionEnemyUIFlag;
+    public bool GetCautionEnemyUIFlag() { return cautionEnemyUIFlag; }
 
-    private bool dangerFlag;
-    public bool GetDangerFlag() { return dangerFlag; }
+    private bool dangerEnemyUIFlag;
+    public bool GetDangerEnemyUIFlag() { return dangerEnemyUIFlag; }
 
-    private bool keyUIFlag;
+    private bool dangerUIFlag;
+    public bool GetDangerUIFlag() { return dangerUIFlag; }
+
+    private bool keyEnemyUIFlag;
 
     private bool startFlag;
     public void SetStartFlag(bool flag) { this.startFlag = flag; }
@@ -205,10 +248,12 @@ public class Enemy : Token
 
         SelectTarget(pm, ref GameMgr.stageList);
 
-        cautionFlag = false;
-        dangerFlag = false;
+        cautionEnemyUIFlag = false;
+        dangerEnemyUIFlag = false;
 
-        this.keyUIFlag = keyUIFlag;
+        dangerUIFlag = false;
+
+        this.keyEnemyUIFlag = keyUIFlag;
 
         this.dp = dp;
 
@@ -223,20 +268,20 @@ public class Enemy : Token
 
         // 
         prefab = Resources.Load("Prefabs/" + "DangerUI") as GameObject;
-        dangerUI = Instantiate(prefab, this.transform.position + offset, prefab.transform.rotation) as GameObject;
-        dangerUI.SetActive(false);
+        dangerEnemyUI = Instantiate(prefab, this.transform.position + offset, prefab.transform.rotation) as GameObject;
+        dangerEnemyUI.SetActive(false);
 
         prefab = Resources.Load("Prefabs/" + "CautionUI") as GameObject;
-        cautionUI = Instantiate(prefab, this.transform.position + offset, prefab.transform.rotation) as GameObject;
-        cautionUI.SetActive(false);
+        cautionEnemyUI = Instantiate(prefab, this.transform.position + offset, prefab.transform.rotation) as GameObject;
+        cautionEnemyUI.SetActive(false);
 
-        if(keyUIFlag == true)
+        if(keyEnemyUIFlag == true)
         {
             prefab = Resources.Load("Prefabs/" + "keyUI") as GameObject;
-            keyUI = Instantiate(prefab, this.transform.position + offset, prefab.transform.rotation) as GameObject;
+            keyEnemyUI = Instantiate(prefab, this.transform.position + offset, prefab.transform.rotation) as GameObject;
         }
 
-        ctm = cautionUI.transform.Find("time").GetComponent<CautionTimeManager>();
+        ctm = cautionEnemyUI.transform.Find("time").GetComponent<CautionTimeManager>();
         ctm.SetTime(5f);
     }
 
@@ -555,7 +600,6 @@ public class Enemy : Token
     /*===================================================*/
     // 更新処理
 
-    //public void UpdateEnemy(ProbabilityMap pm, List<Stage> stageList, List<Wall> wallList, Vector3 playerPos)
     void Update()
     {
         if (startFlag == false) return;
@@ -579,7 +623,7 @@ public class Enemy : Token
             // ウェイポイントを初期化
             wp.Initialize();
 
-            //
+            // 目的地の方向を向く前は移動しない
             moveFlag = false;
         }
 
@@ -596,8 +640,10 @@ public class Enemy : Token
                 Patrol(normalEyeSightLength, normalEyeSightRange);
 
                 // 注意・警告のUIを非表示にする
-                dangerFlag = false;
-                cautionFlag = false;
+                dangerEnemyUIFlag = false;
+                cautionEnemyUIFlag = false;
+
+                dangerUIFlag = false;
 
                 break;
             
@@ -608,9 +654,12 @@ public class Enemy : Token
                 CautionPatrol(cautionEyeSightLength, cautionEyeSightRange);
 
                 // 注意のUIを表示する
-                dangerFlag = false;
-                cautionFlag = true;
+                dangerEnemyUIFlag = false;
+                cautionEnemyUIFlag = true;
 
+                dangerUIFlag = false;
+
+                // cautionステートの時間を計測する
                 ctm.UpdateCautionTime(this);
 
                 break;
@@ -618,33 +667,46 @@ public class Enemy : Token
             // 警告ステートの場合
             case StateType.Danger:
 
-                // プレイヤーを攻撃する
+                // 生きているデコイを検知した場合
                 if (decoy != null && decoy.GetIsDeath() == false)
                 {
+                    // その場でデコイに攻撃する
                     moveFlag = false;
                     DecoyAttack(decoy.transform.position);
+
+                    dangerUIFlag = false;
+
                 }
                 else
                 {
+                    // デコイが死んだのを検知した場合
                     if (decoy != null && decoy.GetIsDeath() == true)
                     {
+                        // 通常ステートに移行する
                         SetStates(StateType.Normal);
                         speed = normalSpeed;
+
+                        dangerUIFlag = false;
+
                         break;
                     }
+
+                    // プレイヤーを検知した場合はプレイヤーを攻撃する
                     moveFlag = true;
                     Attack(player.transform.position);
+
+                    dangerUIFlag = true;
                 }
 
                 // 警告のUIを表示する
-                dangerFlag = true;
-                cautionFlag = false;
+                dangerEnemyUIFlag = true;
+                cautionEnemyUIFlag = false;
 
                 break;
         }
 
-        dangerUI.SetActive(dangerFlag);
-        cautionUI.SetActive(cautionFlag);
+        dangerEnemyUI.SetActive(dangerEnemyUIFlag);
+        cautionEnemyUI.SetActive(cautionEnemyUIFlag);
 
         forward.x = to_binary(this.transform.forward.x);
         forward.y = to_binary(this.transform.forward.y);
@@ -652,47 +714,60 @@ public class Enemy : Token
         // 障害物があった場合に回避するためのポイントを検索し設定
         SelectTarget_in_Obst(forward, GameMgr.wallList);
 
+        // ターゲットの方向に移動する
         MoveTarget();
 
-        FollowUI(cautionUI, offset);
-        FollowUI(dangerUI, offset);
-        if(keyUIFlag == true)
+        // UIを敵と一緒に移動させるs
+        FollowUI(cautionEnemyUI, offset);
+        FollowUI(dangerEnemyUI, offset);
+
+        // 鍵持ち持ちの場合は鍵UIを一緒に移動させる
+        if(keyEnemyUIFlag == true)
         {
-            FollowUI(keyUI, keyOffset);
+            FollowUI(keyEnemyUI, keyOffset);
         }
 
     }
-
     /*===================================================*/
 
+    
+    /// <summary>
+    /// デコイを攻撃する
+    /// </summary>
+    /// <param name="pos"> デコイの座標 </param>
     public void DecoyAttack(Vector3 pos)
     {
-        // プレイヤーの方向を向く
+        // デコイの方向を向く
         LookTarget(pos);
 
-        // プレイヤーに向かって弾を打つ
+        // デコイに向かって弾を打つ
         Shoot(pos);
     } 
 
+    /// <summary>
+    /// プレイヤーを攻撃する
+    /// </summary>
+    /// <param name="pos"> プレイヤーの座標 </param>
     public void Attack(Vector3 pos)
     {
+        // プレイヤーと敵の位置が一定距離離れた場合、通常ステートに移行する
         if ((pos - transform.position).sqrMagnitude > dangerEyeSightLength)
         {
-            //dangerFlag = false;
             SetStates(StateType.Normal);
             speed = normalSpeed;
         }
 
-        // プレイヤーの位置に移動できているか
+        // 目的の位置に移動できているか
         if (IsReachTarget(ref GameMgr.stageList))
         {
+            // 中継地点に移動した場合は中継地点をリセットする
             if (relayStagePos != Vector3.zero)
             {
                 relayStagePos = Vector3.zero;
             }
+            // 目的地点に移動した場合は目的地点を更新する
             else
             {
-                // 目的地を更新
                 targetStagePos = pos;
             }
         }
@@ -705,21 +780,30 @@ public class Enemy : Token
 
     }
 
+
+    /// <summary>
+    /// cautionステートの場合の巡回
+    /// </summary>
+    /// <param name="length"> 敵の視界の長さ </param>
+    /// <param name="range"> 敵の視界の角度 </param>
     public void CautionPatrol(float length, float range)
     {
-        // プレイヤーの位置に移動できているか
+        // 目的位置に移動できているか
         if (IsReachTarget(ref GameMgr.stageList))
         {
+            // 中継地点に移動した場合は中継地点をリセットする
             if (relayStagePos != Vector3.zero)
             {
                 relayStagePos = Vector3.zero;
             }
+            // 目的地点に移動した場合は目的地点を更新する
             else
             {
-                // 目的地を更新
                 targetStagePos = player.transform.position;
             }
         }
+
+        // デコイを探索
         foreach (Decoy d in GameMgr.decoyList)
         {
             if (d.GetIsDeath() == false)
@@ -731,29 +815,41 @@ public class Enemy : Token
                 decoyFlag = false;
             }
         }
-        // プレイヤーを検索
-        SearchPlayer(player.transform.position, length, range, null);
+
+        // デコイが見つからなかった場合、プレイヤーを探索
+        if (decoyFlag == false)
+        {
+            SearchPlayer(player.transform.position, length, range, null);
+        }
+
 
     }
 
+    /// <summary>
+    /// normalステートの場合の巡回
+    /// </summary>
+    /// <param name="length"> 敵の視界の長さ </param>
+    /// <param name="range"> 敵の視界の角度 </param>
     public void Patrol(float length, float range)
     {
         // 目的地に移動できているか
         if (IsReachTarget(ref GameMgr.stageList))
         {
-            //MoveFlag = false;
+            // 中継地点に移動した場合は中継地点をリセットする
             if (relayStagePos != Vector3.zero)
             {
                 relayStagePos = Vector3.zero;
             }
+            // 目的地点に移動した場合は目的地点を更新する
             else
             {
-                // 新しい目的地を設定
                 SelectTarget(pm, ref GameMgr.stageList);
             }
 
         }
-        foreach(Decoy d in GameMgr.decoyList)
+
+        // デコイを探索
+        foreach (Decoy d in GameMgr.decoyList)
         {
             if (d.GetIsDeath() == false)
             {
@@ -764,8 +860,13 @@ public class Enemy : Token
                 decoyFlag = false;
             }
         }
-        // プレイヤーを探索
-        SearchPlayer(player.transform.position, length, range, null);
+
+        // デコイが見つからなかった場合、プレイヤーを探索
+        if (decoyFlag == false)
+        {
+            SearchPlayer(player.transform.position, length, range, null);
+        }
+
     }
 
 
@@ -793,11 +894,11 @@ public class Enemy : Token
                 }
             }
 
-            dangerUI.SetActive(false);
-            cautionUI.SetActive(false);
-            if (keyUIFlag == true)
+            dangerEnemyUI.SetActive(false);
+            cautionEnemyUI.SetActive(false);
+            if (keyEnemyUIFlag == true)
             {
-                keyUI.SetActive(false);
+                keyEnemyUI.SetActive(false);
                 foreach (Wall w in GameMgr.wallList)
                 {
                     if (w.gateFlag)

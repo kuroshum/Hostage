@@ -266,7 +266,7 @@ public class Player : Token
             // 近くに敵がいた場合はその敵のステートを攻撃にする
             foreach(Enemy e in GameMgr.enemyList)
             {
-                if((this.transform.position - e.transform.position).sqrMagnitude < Enemy.normalEyeSightLength)
+                if((this.transform.position - e.transform.position).sqrMagnitude < e.GetNormalEyeSightLength())
                 {
                     if(e.GetStates() != StateType.Danger)
                     {
