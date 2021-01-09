@@ -64,6 +64,7 @@ public class Enemy : Token
     /// <summary>
     /// 目的地のステージの座標
     /// </summary>
+    [SerializeField]
     private Vector3 targetStagePos;
     public void SetTargetStagePos(Vector3 pos) { targetStagePos = pos; }
     
@@ -77,6 +78,7 @@ public class Enemy : Token
     /// </summary>
     [SerializeField]
     private Vector3 relayStagePos;
+    public void SetRelayStagePos(Vector3 pos) { this.relayStagePos = pos; }
 
     /// <summary>
     /// 確率マップのクラスのインスタンス
@@ -291,12 +293,19 @@ public class Enemy : Token
         EnemyShot.parent = new TokenMgr<EnemyShot>("EnemyShot", SHOT_NUM);
     }
 
+    /// <summary>
+    /// プレイヤーの方向を向く
+    /// </summary>
     public void LookPlayer()
     {
         Quaternion rot = Quaternion.LookRotation(player.transform.position - this.transform.position);
         this.transform.rotation = Quaternion.Lerp(this.transform.rotation, rot, speed / 30);
     }
 
+    /// <summary>
+    /// 目的地の方向を向く
+    /// </summary>
+    /// <param name="targetPos"> 目的地の座標 </param>
     public void LookTarget(Vector3 targetPos)
     {
         Quaternion rot = Quaternion.LookRotation(targetPos - this.transform.position);
@@ -324,16 +333,22 @@ public class Enemy : Token
         return rad * Mathf.Rad2Deg;
     }
 
+    /// <summary>
+    /// 目的地に移動する
+    /// </summary>
     public void MoveTarget()
     {
+        // 中継地点がある場合は中継地点を目的地に設定
         Vector3 targetPos = targetStagePos;
         if(relayStagePos != Vector3.zero)
         {
             targetPos = relayStagePos;
         }
 
+        // 目的地の方向を向く
         LookTarget(targetPos);
 
+        // 目的地の方向を向いたら移動する
         if (moveFlag == true)
         {
             velocity = (targetPos - this.transform.position).normalized * speed;
@@ -345,9 +360,7 @@ public class Enemy : Token
     /// <summary>
     /// 目的地に到達できているかを確認する関数
     /// </summary>
-    /// <param name="stageList"></param>
-    /// <returns></returns>
-    public bool IsReachTarget(ref List<Stage> stageList)
+    public bool IsReachTarget()
     {
         // 中継地点を設定している場合
         if(relayStagePos != Vector3.zero)
@@ -651,7 +664,7 @@ public class Enemy : Token
             case StateType.Caution:
 
                 // 注意ステートの巡回
-                CautionPatrol(cautionEyeSightLength, cautionEyeSightRange);
+                CautionPatrol(cautionEyeSightLength, cautionEyeSightRange, player.transform.position);
 
                 // 注意のUIを表示する
                 dangerEnemyUIFlag = false;
@@ -666,6 +679,8 @@ public class Enemy : Token
             
             // 警告ステートの場合
             case StateType.Danger:
+
+                //targetStagePos = player.transform.position;
 
                 // 生きているデコイを検知した場合
                 if (decoy != null && decoy.GetIsDeath() == false)
@@ -688,14 +703,19 @@ public class Enemy : Token
 
                         dangerUIFlag = false;
 
-                        break;
+                        //break;
+                    }
+                    // プレイヤーを検知した場合
+                    else
+                    {
+                        // プレイヤーを検知した場合はプレイヤーを攻撃する
+                        moveFlag = true;
+                        Attack(player.transform.position);
+
+                        dangerUIFlag = true;
                     }
 
-                    // プレイヤーを検知した場合はプレイヤーを攻撃する
-                    moveFlag = true;
-                    Attack(player.transform.position);
 
-                    dangerUIFlag = true;
                 }
 
                 // 警告のUIを表示する
@@ -750,6 +770,9 @@ public class Enemy : Token
     /// <param name="pos"> プレイヤーの座標 </param>
     public void Attack(Vector3 pos)
     {
+        //
+        targetStagePos = player.transform.position;
+
         // プレイヤーと敵の位置が一定距離離れた場合、通常ステートに移行する
         if ((pos - transform.position).sqrMagnitude > dangerEyeSightLength)
         {
@@ -758,7 +781,7 @@ public class Enemy : Token
         }
 
         // 目的の位置に移動できているか
-        if (IsReachTarget(ref GameMgr.stageList))
+        if (IsReachTarget())
         {
             // 中継地点に移動した場合は中継地点をリセットする
             if (relayStagePos != Vector3.zero)
@@ -786,10 +809,12 @@ public class Enemy : Token
     /// </summary>
     /// <param name="length"> 敵の視界の長さ </param>
     /// <param name="range"> 敵の視界の角度 </param>
-    public void CautionPatrol(float length, float range)
+    public void CautionPatrol(float length, float range, Vector3 pos)
     {
+        targetStagePos = player.transform.position;
+
         // 目的位置に移動できているか
-        if (IsReachTarget(ref GameMgr.stageList))
+        if (IsReachTarget())
         {
             // 中継地点に移動した場合は中継地点をリセットする
             if (relayStagePos != Vector3.zero)
@@ -799,7 +824,8 @@ public class Enemy : Token
             // 目的地点に移動した場合は目的地点を更新する
             else
             {
-                targetStagePos = player.transform.position;
+                //targetStagePos = player.transform.position;
+                targetStagePos = pos;
             }
         }
 
@@ -833,7 +859,7 @@ public class Enemy : Token
     public void Patrol(float length, float range)
     {
         // 目的地に移動できているか
-        if (IsReachTarget(ref GameMgr.stageList))
+        if (IsReachTarget())
         {
             // 中継地点に移動した場合は中継地点をリセットする
             if (relayStagePos != Vector3.zero)
@@ -885,7 +911,9 @@ public class Enemy : Token
                 if((this.transform.position - e.transform.position).sqrMagnitude < normalEyeSightLength)
                 {
                     //e.SetDangerFlag(true);
-                    targetStagePos = player.transform.position;
+                    //targetStagePos = player.transform.position;
+                    e.SetRelayStagePos(Vector3.zero);
+                    e.SetTargetStagePos(player.transform.position);
                     e.SetStates(StateType.Caution);
                 }
             }

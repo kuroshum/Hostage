@@ -265,6 +265,7 @@ public class Player : Token
                     {
                         if (e.GetStates() != StateType.Danger)
                         {
+                            e.SetRelayStagePos(Vector3.zero);
                             e.SetTargetStagePos(this.transform.position);
                             e.SetStates(StateType.Caution);
                         }
