@@ -60,11 +60,6 @@ public class Player : Token
 
     private Vector3 currentPosition = Vector3.zero;
 
-    //　HP表示用UI
-    private GameObject HPUI;
-    //　HP表示用スライダー
-    private Slider hpSlider;
-
     private bool startFlag;
     public void SetStartFlag(bool flag) { this.startFlag = flag; }
 
@@ -304,10 +299,12 @@ public class Player : Token
                         currentPosition.y = 0;
 
                         Decoy decoy = Decoy.Add(GameMgr.decoyList.Count, gm, currentPosition);
-                        decoy.InitilizeHp();
+                        decoy.InitilizeObjColor();
                         GameMgr.decoyList.Add(decoy);
                         decoyNum--;
                         dg.SetDecoyGauge(decoyNum);
+
+                        decoy.StaetRemoveDecoyCoroutine();
                     }
 
                 }
