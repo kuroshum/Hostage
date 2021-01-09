@@ -357,7 +357,7 @@ MonoBehaviour:
   speed: 3
   relayStagePos: {x: 0, y: 0, z: 0}
   obstTime: 0
-  MoveFlag: 0
+  moveFlag: 0
   velocity: {x: 0, y: 0, z: 0}
   SHOT_NUM: 30
   m_shotSpeed: 5
@@ -365,11 +365,11 @@ MonoBehaviour:
   m_shotTimer: 1.5
   m_shotCount: 1
   m_shotInterval: 1.5
-  offset: {x: 0, y: 0, z: 1}
-  keyOffset: {x: 0, y: 0, z: -1.5}
-  dangerUI: {fileID: 0}
-  cautionUI: {fileID: 0}
-  keyUI: {fileID: 0}
+  offset: {x: 0, y: 1, z: 1}
+  keyOffset: {x: 0, y: 1, z: -1.5}
+  dangerEnemyUI: {fileID: 0}
+  cautionEnemyUI: {fileID: 0}
+  keyEnemyUI: {fileID: 0}
   states: 0
 --- !u!65 &-8082989661256937560
 BoxCollider:
