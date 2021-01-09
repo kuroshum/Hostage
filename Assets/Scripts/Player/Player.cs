@@ -60,11 +60,6 @@ public class Player : Token
 
     private Vector3 currentPosition = Vector3.zero;
 
-    //　HP表示用UI
-    private GameObject HPUI;
-    //　HP表示用スライダー
-    private Slider hpSlider;
-
     private bool startFlag;
     public void SetStartFlag(bool flag) { this.startFlag = flag; }
 
@@ -247,56 +242,73 @@ public class Player : Token
         //if (m_shotTimer < m_shotInterval) return;
 
         
-
+        // マウスクリック左で弾を発射
         if (Input.GetMouseButtonDown(0))
         {
-            // 発射間隔が足りなかった場合
-            if (m_shotTimer < m_shotInterval || shotNum <= 0) return;
-
-            // 弾を発射する
-            ShootNWay(angle, m_shotAngleRange, m_shotSpeed, m_shotCount);
-
-            // 持ち弾を減らす
-            shotNum--;
-            psg.SetShotGauge(shotNum);
-
-            // 弾の発射タイミングを管理するタイマーをリセットする
-            m_shotTimer = 0;
-
-            // 近くに敵がいた場合はその敵のステートを攻撃にする
-            foreach(Enemy e in GameMgr.enemyList)
+            // 発射間隔と残弾数のチェック
+            if (m_shotTimer >= m_shotInterval && shotNum > 0)
             {
-                if((this.transform.position - e.transform.position).sqrMagnitude < e.GetNormalEyeSightLength())
+                // 弾を発射する
+                ShootNWay(angle, m_shotAngleRange, m_shotSpeed, m_shotCount);
+
+                // 持ち弾を減らす
+                shotNum--;
+                psg.SetShotGauge(shotNum);
+
+                // 弾の発射タイミングを管理するタイマーをリセットする
+                m_shotTimer = 0;
+
+                // 近くに敵がいた場合はその敵のステートを攻撃にする
+                foreach (Enemy e in GameMgr.enemyList)
                 {
-                    if(e.GetStates() != StateType.Danger)
+                    if ((this.transform.position - e.transform.position).sqrMagnitude < e.GetNormalEyeSightLength())
                     {
-                        e.SetTargetStagePos(this.transform.position);
-                        e.SetStates(StateType.Caution);
+                        if (e.GetStates() != StateType.Danger)
+                        {
+                            e.SetTargetStagePos(this.transform.position);
+                            e.SetStates(StateType.Caution);
+                        }
+
+                    }
+                }
+            }
+
+            
+        }
+
+        // マウスクリックでデコイを配置
+        if (Input.GetMouseButtonDown(1))
+        {
+            // デコイ数をチェック
+            // マウスクリックした場所から近いステージにデコイを配置する
+            if (decoyNum > 0)
+            {
+                // メインカメラからクリックした地点のベクトルでRayを飛ばす
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                // 
+                RaycastHit hit = new RaycastHit();
+
+                //レイを投げて何かのオブジェクトに当たった場合
+                if (Physics.Raycast(ray, out hit))
+                {
+                    // 衝突したオブジェクトがステージかウェイポイントの場合はデコイ配置
+                    if(hit.collider.tag == "Stage" || hit.collider.tag == "Point")
+                    {
+                        //レイが当たった位置(hit.point)にオブジェクトを生成する
+                        currentPosition = hit.point;
+                        currentPosition.y = 0;
+
+                        Decoy decoy = Decoy.Add(GameMgr.decoyList.Count, gm, currentPosition);
+                        decoy.InitilizeObjColor();
+                        GameMgr.decoyList.Add(decoy);
+                        decoyNum--;
+                        dg.SetDecoyGauge(decoyNum);
+
+                        decoy.StaetRemoveDecoyCoroutine();
                     }
 
                 }
             }
-        }
-
-        if (Input.GetMouseButtonDown(1))
-        {
-            if (decoyNum <= 0) return;
-
-            var ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-            var raycastHitList = Physics.RaycastAll(ray).ToList();
-            if (raycastHitList.Any())
-            {
-                var distance = Vector3.Distance(mainCamera.transform.position, raycastHitList.First().point);
-                var mousePosition = new Vector3(Input.mousePosition.x, Input.mousePosition.y, distance);
-
-                currentPosition = mainCamera.ScreenToWorldPoint(mousePosition);
-                currentPosition.y = 0;
-            }
-            Decoy decoy = Decoy.Add(GameMgr.decoyList.Count, gm, currentPosition);
-            decoy.InitilizeHp();
-            GameMgr.decoyList.Add(decoy);
-            decoyNum--;
-            dg.SetDecoyGauge(decoyNum);
         }
 
     }

@@ -878,10 +878,6 @@ public class Enemy : Token
         // 弾にあたったら
         if (col.gameObject.tag == "Shot")
         {
-            //Debug.Log("ID :" + ID);
-            //gm.RemoveEnemy_at_elist(ID);
-            //Debug.Log("e_list :" + gm.e_list.Count);
-
             gm.RemoveEnemy(this);
 
             foreach(Enemy e in GameMgr.enemyList)
