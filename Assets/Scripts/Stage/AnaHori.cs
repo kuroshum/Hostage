@@ -27,42 +27,13 @@ public class AnaHori : MonoBehaviour
 
         rnd = new System.Random(System.Environment.TickCount);
 
-        
-
-        /*
-        max = 25;
-
-        /*
-         * ステージマップが保存されているテキストのパス
-         *
-        //string StageFile = System.IO.Path.GetFileName(@"C:\Users\stage.txt");
-        string StageFile = Application.dataPath + "/" + "Resources" + "/" + "stage2.txt";
-
-        //マップ状態初期化
-        walls = new string[max, max];
-
-        for (int i = 0; i < max; i++)
-        {
-            for (int j = 0; j < max; j++)
-            {
-                if (i == 0 || j == 0 || i == max-1 || j == max-1)
-                {
-                    walls[i, j] = "-";
-                }
-                else
-                {
-                    walls[i, j] = "#";
-                }
-            }
-        }
-        */
-
         //スタート地点の取得
         startPos = GetStartPosition();
 
         //通路の生成
         //初回はゴール地点を設定する
         goalPos = MakeDungeonMap(startPos, ref walls);
+
         //通路生成を繰り返して袋小路を減らす
         int[] tmpStart = goalPos;
         for (int i = 0; i < size-8; i++)
@@ -119,24 +90,6 @@ public class AnaHori : MonoBehaviour
 
         return walls;
         //-----------------------------------------------------------------
-        /*
-        string StageFile = Application.dataPath + "/" + "Resources" + "/" + "stage3.txt";
-        ReadWrite.ListWrite(StageFile, walls, max, max);
-
-        string data = "";
-
-        for (int i = 0; i < max; i++)
-        {
-            for (int j = 0; j < max; j++)
-            {
-                data = data + walls[i][j].type;
-                Debug.Log(walls[i][j].type);
-            }
-            data = data + "\n";
-        }
-
-        return data;
-        */
     }
 
     bool Check_dead_end(int i, int j, int h, int v, List<List<RoomChip>> walls)
@@ -202,8 +155,6 @@ public class AnaHori : MonoBehaviour
             movePos = GetPosition(tmpStartPos, walls);
 
             break;
-            if (cnt > 1) break;
-            cnt++;
         }
         //探索終了時の座標を返す
         return tmpStartPos;
@@ -241,29 +192,4 @@ public class AnaHori : MonoBehaviour
         return (x < 0 || y < 0 || x >= max || y >= max);
     }
 
-    /*
-    //パラメータに応じてオブジェクトを生成する
-    void BuildDungeon()
-    {
-        //縦横1マスずつ大きくループを回し、壁とする
-        for (int i = -1; i <= max; i++)
-        {
-            for (int j = -1; j <= max; j++)
-            {
-                //範囲外、または壁の場合に壁オブジェクトを生成する
-                if (isOutOfRange(i, j)
-                    || walls[i, j] == 0)
-                {
-                    GameObject wallObj = Instantiate(wall, new Vector3(i, 0, j), Quaternion.identity) as GameObject;
-                    wallObj.transform.parent = transform;
-                }
-
-                //全ての場所に床オブジェクトを生成
-                GameObject floorObj = Instantiate(floor, new Vector3(i, -1, j), Quaternion.identity) as GameObject;
-                floorObj.transform.parent = transform;
-            }
-        }
-
-    }
-    */
 }

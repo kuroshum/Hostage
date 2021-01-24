@@ -70,6 +70,11 @@ public class AnahoriDungeon : MonoBehaviour
         return range;
     }
 
+    /// <summary>
+    /// 障害物を作成
+    /// </summary>
+    /// <param name="len"></param>
+    /// <param name="tmp_room"></param>
     public void MakeObst(int len, List<RoomChip> tmp_room)
     {
         int size = len * 2 - 1;
@@ -144,6 +149,12 @@ public class AnahoriDungeon : MonoBehaviour
 
     }
 
+    /// <summary>
+    /// 設定された座標を中心とした部屋を作成できるかを判定
+    /// </summary>
+    /// <param name="startRoomPos"></param>
+    /// <param name="len"></param>
+    /// <returns></returns>
     public bool CheckRoom(int[] startRoomPos, int len)
     {
         int[] size = CreateRange(len);
@@ -152,12 +163,13 @@ public class AnahoriDungeon : MonoBehaviour
         {
             for (int j = 0; j < size.Length; j++)
             {
-
+                // ステージを作成する際に使用する、サイズ[max, max]のステージの素からはみ出ていないかを判定
                 if(startRoomPos[0] + size[i] > max-1 || startRoomPos[1] + size[j] > max-1 || startRoomPos[0] + size[i] < 0 || startRoomPos[1] + size[j] < 0)
                 {
                     return false;
                 }
                 
+                // 作成する部屋と既存の部屋が被っていないかを判定
                 if (map[startRoomPos[0] + size[i]][startRoomPos[1] + size[j]].type == "#")
                 {
                     return false;
@@ -178,40 +190,44 @@ public class AnahoriDungeon : MonoBehaviour
     /// <returns></returns>
     public int[] SearchPos(int len, int id, int init_len, int ROOM_NUM)
     {
-        int cnt = 0;
-
         // 部屋を作成する座標を計算
         while (true)
         {
+            // 新しい部屋を作成する際に、既存のどの部屋の壁を起点にするかを設定
             int ind;
             if(id == 2)
             {
+                // 二番目につくる部屋はランダム
                 ind = rnd.Next(0, border.Count);
             }
             else
             {
+                // 三番目以降に作る部屋の起点が二番目以降に作った部屋の壁になるように設定
                 ind = rnd.Next((init_len * 2 - 1) * 4, border.Count);
             }
-            //int ind = rnd.Next(len * len - 1, border.Count);
-
             startBorder = border[ind];
+
 
             for (int i = -1; i < 2; i += 2)
             {
-                if(startBorder.x + i > max-1 || startBorder.x + i < 0 || startBorder.y + i > max - 1 || startBorder.y + i < 0)
+                // ステージを作成する際に使用する、サイズ[max, max]のステージの素から部屋がはみ出ていないかを判定
+                if(startBorder.x + i > max - 1 || startBorder.x + i < 0 || startBorder.y + i > max - 1 || startBorder.y + i < 0)
                 {
                     Vert = 0;
                     Hori = 0;
                     break;
                 }
+                
+                // 起点となる壁の左右と上下のどちらに部屋を作成するスペースがあるかを判定
 
-
+                // 左右にある場合
                 if (map[startBorder.x + i][startBorder.y].type == "#")
                 {
                     Vert = -i;
                     Hori = 0;
                 }
 
+                // 上下にある場合
                 if (map[startBorder.x][startBorder.y + i].type == "#")
                 {
                     Vert = 0;
@@ -219,19 +235,16 @@ public class AnahoriDungeon : MonoBehaviour
                 }
             }
 
+            // 部屋がはみ出ている場合はやり直し
             if (Vert == 0 && Hori == 0) continue;
 
+            // 部屋を作成する起点となる座標を設定
             startRoomPos = new int[2] { startBorder.x + (len * Vert), startBorder.y + (len * Hori) };
 
-            //map[startRoomPos[0], startRoomPos[1]] = "s";
-
+            // 起点から部屋を作成できない場合はやり直し
             if (CheckRoom(startRoomPos, len)) break;
-
-            if (cnt > 1000) break;
-            cnt++;
-
         }
-        //Debug.Log("Loop : " + cnt);
+
 
         // 部屋と部屋を繋げる通路を作成
         for (int h = -1; h < 2; h++)
@@ -254,6 +267,8 @@ public class AnahoriDungeon : MonoBehaviour
                 }
             }
         }
+
+        // どの部屋と部屋が繋がっているかを保存
         if(id != ROOM_NUM + 1)
         {
             GameMgr.stageIDList[map[startBorder.x][startBorder.y].id - 1].Add(id);
@@ -262,8 +277,6 @@ public class AnahoriDungeon : MonoBehaviour
             //Debug.Log("ID : " + id);
         }
         
-
-        //map[startBorder.x][startBorder.y].type = "b";
 
         // 部屋の壁を作成
         for (int i = 0; i < border.Count; i++)
@@ -278,10 +291,9 @@ public class AnahoriDungeon : MonoBehaviour
                 i--;
             }
         }
-
+        
+        // 生成する部屋の座標を返す
         return startRoomPos;
-
-
     }
 
     /// <summary>
@@ -338,6 +350,8 @@ public class AnahoriDungeon : MonoBehaviour
         // ROOMNUMの数だけ部屋と障害物を作成
         for (int i = 2; i < ROOM_NUM+2; i++)
         {
+            // 最後に作成する部屋は人質のいる部屋なので
+            // 障害物を作成しない
             if(i != ROOM_NUM + 1)
             {
                 // 作成する部屋の半径サイズを設定
@@ -400,42 +414,20 @@ public class AnahoriDungeon : MonoBehaviour
                             }
                         }
                     }
-                    /*
-                    for (int h = -1; h < 2; h++)
-                    {
-                        for (int w = -1; w < 2; w++)
-                        {
-                            if (map[i + h][j + w].type == "#")
-                            {
-                                map[i + h][j + w].type = "*";
-                            }
-                        }
-                    }
-                    map[i][j].type = "*";
-                    */
+                    
                 } 
             }
         }
 
+        // 人質の居る場所を設定
         map[startPos[0]][startPos[1]].type = "G";
-
+        
+        // 作成したステージをテキストファイルに書き込み
         string StageFile = Application.dataPath + "/" + "Resources" + "/" + "stage3.txt";
         ReadWrite.ListWrite(StageFile, map, max, max);
 
-        
 
         return map;
     }
 
-    bool Check_dead_end(int i, int j, int h, int v)
-    {
-        int cnt = 0;
-        if (map[i + h + 1][j + v + 1].type == "-") cnt++;
-        if (map[i + h - 1][j + v + 1].type == "-") cnt++;
-        if (map[i + h + 1][j + v - 1].type == "-") cnt++;
-        if (map[i + h - 1][j + v - 1].type == "-") cnt++;
-
-        if (cnt >= 4) return false;
-        else return true;
-    }
 }
