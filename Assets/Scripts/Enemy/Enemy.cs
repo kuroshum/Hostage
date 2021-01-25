@@ -140,6 +140,11 @@ public class Enemy : Token
     /// dangerステートの場合の視界角度
     /// </summary>
     private float dangerEyeSightLength = 60f;
+
+    /// <summary>
+    /// 攻撃を行うときの距離
+    /// </summary>
+    private float dangerAttackLength = 7f;
     
     /// <summary>
     /// 速度
@@ -372,6 +377,13 @@ public class Enemy : Token
         // 目的地の方向を向いたら移動する
         if (moveFlag == true)
         {
+            // プレイヤーを攻撃している場合は、プレイヤーと重ならないようにする
+            if(states == StateType.Danger && (player.transform.position - this.transform.position).sqrMagnitude < dangerAttackLength)
+            {
+                return;
+            }
+
+            // 目的地に移動
             velocity = (targetPos - this.transform.position).normalized * speed;
             transform.position += velocity * Time.deltaTime;
         }
