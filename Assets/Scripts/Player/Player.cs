@@ -236,7 +236,7 @@ public class Player : Token
             // プレイヤーの位置(transform.position)の更新
             // 移動方向ベクトル(velocity)を足し込みます
             //this.transform.position = Vector3.MoveTowards(this.transform.position, this.transform.position + velocity.normalized, moveSpeed * Time.deltaTime);
-            this.transform.position += velocity * moveSpeed * Time.deltaTime;
+            this.transform.position += velocity.normalized * moveSpeed * Time.deltaTime;
 
             // キーボードの方向キーの移動量を取得し、その移動量を前の値から新しい値へと補間した状態をvelocityに入れ直す
             velocity = Vector3.MoveTowards(oldVeclocity, velocity, moveSpeed * Time.deltaTime);
