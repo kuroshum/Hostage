@@ -199,6 +199,12 @@ public class Enemy : Token
 
     private Decoy decoy;
 
+    private GameObject tankTower;
+    public void SetTankTower() { tankTower = this.transform.Find("TankFree_Tower").gameObject; }
+
+    private Transform canonPos;
+    public void SetCanonPos() { canonPos = tankTower.transform.Find("CanonPos").transform; }
+
 
     [SerializeField]
     private StateType states;
@@ -223,6 +229,10 @@ public class Enemy : Token
 
         // IDを設定したり固有の処理をする
         e.SetParam(id);
+
+        e.SetTankTower();
+
+        e.SetCanonPos();
 
         return e;
     }
@@ -300,6 +310,7 @@ public class Enemy : Token
     {
         Quaternion rot = Quaternion.LookRotation(player.transform.position - this.transform.position);
         this.transform.rotation = Quaternion.Lerp(this.transform.rotation, rot, speed / 30);
+        tankTower.transform.rotation = Quaternion.Lerp(tankTower.transform.rotation, rot, speed / 30);
     }
 
     /// <summary>
@@ -323,6 +334,16 @@ public class Enemy : Token
         }
 
     }
+
+
+    /// <summary>
+    /// 砲塔を回転させる
+    /// </summary>
+    public void RotateCanon()
+    {
+        tankTower.transform.RotateAround(this.transform.position, Vector3.up, Time.deltaTime * 90);
+    }
+
 
     // 指定された 2 つの位置から角度を求めて返す
     public float GetAngle(Vector3 from, Vector3 to)
@@ -492,7 +513,7 @@ public class Enemy : Token
         if( playerDirection.sqrMagnitude < length)
         {
             // ベクトルから角度を計算
-            var angle = Vector3.Angle(this.transform.forward, playerDirection);
+            var angle = Vector3.Angle(tankTower.transform.forward, playerDirection);
 
             // プレイヤーが扇形の視界に入っている場合
             if (angle <= range)
@@ -532,8 +553,6 @@ public class Enemy : Token
                 }
             }
         }
-
-        
     }
 
 
@@ -546,7 +565,8 @@ public class Enemy : Token
     /// <param name="count"></param>
     private void ShootNWay(float angleBase, float angleRange, float speed, int count)
     {
-        var pos = transform.position + transform.forward; // プレイヤーの位置
+        // var pos = transform.position + transform.forward; // プレイヤーの位置
+        var pos = canonPos.position;
         var rot = transform.rotation; // プレイヤーの向き
 
         // 弾を複数発射する場合
@@ -597,6 +617,8 @@ public class Enemy : Token
         // 弾の発射タイミングを管理するタイマーをリセットする
         m_shotTimer = 0;
     }
+
+    
 
 
     int to_binary(float num)
@@ -651,6 +673,8 @@ public class Enemy : Token
                 
                 // 通常の巡回
                 Patrol(normalEyeSightLength, normalEyeSightRange);
+
+                RotateCanon();
 
                 // 注意・警告のUIを非表示にする
                 dangerEnemyUIFlag = false;
@@ -736,6 +760,7 @@ public class Enemy : Token
 
         // ターゲットの方向に移動する
         MoveTarget();
+
 
         // UIを敵と一緒に移動させるs
         FollowUI(cautionEnemyUI, offset);
