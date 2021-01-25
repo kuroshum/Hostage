@@ -592,7 +592,7 @@ public class Enemy : Token
                     angleRange * ((float)i / (count - 1) - 0.5f);
 
                 // 発射する弾を生成する
-                var shot = EnemyShot.Add(this.gameObject.tag, pos.x, pos.y, pos.z);
+                var shot = EnemyShot.Add(this.gameObject.tag, pos.x, pos.y, pos.z, player);
 
                 // 弾を発射する方向と速さを設定する
                 shot.Init(angle, speed, gm);
@@ -603,7 +603,7 @@ public class Enemy : Token
         else if (count == 1)
         {
             // 発射する弾を生成する
-            var shot = EnemyShot.Add(this.gameObject.tag, pos.x, pos.y, pos.z);
+            var shot = EnemyShot.Add(this.gameObject.tag, pos.x, pos.y, pos.z, player);
 
             // 弾を発射する方向と速さを設定する
             shot.Init(angleBase, speed, gm);

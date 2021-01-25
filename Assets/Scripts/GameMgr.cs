@@ -114,7 +114,7 @@ public class GameMgr : MonoBehaviour
         return hostageFlag;
     }
 
-    public void StartExploson(Collision col, float time)
+    public void StartExploson(Collider col, float time)
     {
         StartCoroutine(Exploson(col.gameObject, time));
     }

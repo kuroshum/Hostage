@@ -20,10 +20,16 @@ public class EnemyShot : Token
 
     // 速度
     protected Vector3 velocity;
+    public Vector3 GetVelocity() { return velocity; }
 
     protected GameMgr gm;
 
     private AudioSource sound;
+
+    private Player player;
+    private void SetPlayer(Player player) { this.player = player; }
+
+    private float speed;
 
     //[SerializeField]
     //private GameObject Effect;
@@ -56,11 +62,13 @@ public class EnemyShot : Token
     {
         this.gm = gm;
 
+        this.speed = speed;
+
         // 弾の発射角度をベクトルに変換する
         var direction = GetDirection(angle);
 
         // 発射角度と速さから速度を求める
-        velocity = direction * speed;
+        velocity = direction;
 
         // 弾が進行方向を向くようにする
         var angles = transform.localEulerAngles;
@@ -76,22 +84,46 @@ public class EnemyShot : Token
     void Update()
     {
         // 移動する
-        transform.localPosition += velocity * Time.deltaTime;
+        transform.localPosition += velocity * speed * Time.deltaTime;
     }
 
-    public static EnemyShot Add(string tag_name, float x, float y, float z)
+    public static EnemyShot Add(string tag_name, float x, float y, float z, Player player)
     {
         // Enemyインスタンスの取得
         EnemyShot es = parent.Add(x, y, z);
 
         es.SetTagName(tag_name);
 
+        es.SetPlayer(player);
+
         return es;
     }
 
-    void OnCollisionEnter(Collision col)
+    void OnTriggerEnter(Collider col)
     {
-        if (col.gameObject.tag == "Player" || col.gameObject.tag == "PlayerShot" || col.gameObject.tag == "Decoy")
+
+        if(col.gameObject.tag == "Player")
+        {
+            Vector2 eshot_forward = new Vector2(this.transform.forward.x, this.transform.forward.z);
+            Vector2 player_forward = new Vector2(col.transform.forward.x, col.transform.forward.z);
+
+            // 
+            if (Mathf.Abs(player.GetAngle(player_forward, eshot_forward)) > 30f && Mathf.Abs(Vector2.Dot(player_forward, eshot_forward)) > 0.1f)
+            {
+                Debug.Log("跳弾");
+                Vector2 nomal_vector = new Vector2(-player_forward.y, player_forward.x);
+                velocity = eshot_forward + 2 * Vector2.Dot(-eshot_forward, nomal_vector) * nomal_vector;
+                velocity.y = 0f;
+            }
+            else
+            {
+                Debug.Log("貫通");
+                player.SetHp(player.GetHp() - 1);
+                Vanish();
+            }
+        }
+
+        if (col.gameObject.tag == "PlayerShot" || col.gameObject.tag == "Decoy")
         {
             Vanish();
         }

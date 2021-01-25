@@ -324,11 +324,6 @@ public class Player : Token
 
     void OnCollisionEnter(Collision col)
     {
-        if(col.gameObject.tag == "EnemyShot")
-        {
-            hp--;
-            SetHp(hp);
-        }
         
     }
 
