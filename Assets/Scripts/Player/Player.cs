@@ -26,6 +26,8 @@ public class Player : Token
     private float applySpeed;
     public void SetApplySpeed(float apply_speed) { applySpeed = apply_speed; }
 
+    private Vector3 oldVeclocity;
+
 
     public float m_shotSpeed; // 弾の移動の速さ
     public float m_shotAngleRange; // 複数の弾を発射する時の角度
@@ -48,6 +50,12 @@ public class Player : Token
     public  int GetMaxDecoyNum() { return maxDecoyNum; }
     [SerializeField]
     private int decoyNum;
+
+    private GameObject tankTower;
+    public void SetTankTower() { tankTower = this.transform.Find("TankFree_Tower").gameObject; }
+
+    private Transform canonPos;
+    public void SetCanonPos() { canonPos = tankTower.transform.Find("CanonPos").transform; }
 
     private LifeGauge lg;
 
@@ -80,6 +88,10 @@ public class Player : Token
         p.SetStartFlag(false);
 
         p.SetMainCamera(mainCamera);
+
+        p.SetTankTower();
+
+        p.SetCanonPos();
 
         return p;
     }
@@ -147,7 +159,8 @@ public class Player : Token
     // 弾を発射する関数
     private void ShootNWay(float angleBase, float angleRange, float speed, int count)
     {
-        var pos = transform.position + transform.forward / 2f; // プレイヤーの位置
+        //var pos = transform.position + transform.forward / 2f; // プレイヤーの位置
+        var pos = canonPos.position;
         var rot = transform.rotation; // プレイヤーの向き
 
         // 弾を複数発射する場合
@@ -184,43 +197,8 @@ public class Player : Token
         }
     }
 
-    //public void UpdatePlayer()
-    void Update()
+    private float LookCanon()
     {
-        if (startFlag == false) return;
-
-        // WASD入力から、XZ平面(水平な地面)を移動する方向(velocity)を得ます
-        velocity = Vector3.zero;
-        if (Input.GetKey(KeyCode.W))
-        {
-            velocity.z += 1;
-        }
-        if (Input.GetKey(KeyCode.A))
-        {
-            velocity.x -= 1;
-        }
-        if (Input.GetKey(KeyCode.S))
-        {
-            velocity.z -= 1;
-        }
-        if (Input.GetKey(KeyCode.D))
-        {
-            velocity.x += 1;
-        }
-
-        // 速度ベクトルの長さを1秒でmoveSpeedだけ進むように調整します
-        velocity = velocity.normalized * moveSpeed * Time.deltaTime;
-
-        // いずれかの方向に移動している場合
-        if (velocity.magnitude > 0)
-        {
-            // プレイヤーの位置(transform.position)の更新
-            // 移動方向ベクトル(velocity)を足し込みます
-            this.transform.position += velocity;
-        }
-
-        
-
         // プレイヤーのスクリーン座標を計算する
         var screenPos = Camera.main.WorldToScreenPoint(this.transform.position);
 
@@ -228,19 +206,49 @@ public class Player : Token
         var direction = Input.mousePosition - screenPos;
 
         // マウスカーソルが存在する方向の角度を取得する
-        var angle = GetAngle(Vector3.zero, direction);
+        float angle = GetAngle(Vector3.zero, direction);
 
         // プレイヤーがマウスカーソルの方向を見るようにする
-        var angles = transform.localEulerAngles;
+        var angles = tankTower.transform.eulerAngles;
         angles.y = angle - 90;
-        transform.localEulerAngles = -angles;
+        tankTower.transform.eulerAngles = -angles;
+
+        return angle;
+    }
+
+    private void LookCrawler(Vector3 diff)
+    {
+        transform.rotation = Quaternion.RotateTowards(this.transform.rotation, Quaternion.Euler(diff), Time.deltaTime*10);
+    }
+
+    //public void UpdatePlayer()
+    void Update()
+    {
+        if (startFlag == false) return;
+
+        // WASD入力から、XZ平面(水平な地面)を移動する方向(velocity)を得ます
+        velocity = Vector3.zero;
+        velocity = new Vector3(Input.GetAxis("Horizontal"), 0f, Input.GetAxis("Vertical"));
+
+        // いずれかの方向に移動している場合
+        if (velocity.magnitude > 0)
+        {
+            // プレイヤーの位置(transform.position)の更新
+            // 移動方向ベクトル(velocity)を足し込みます
+            //this.transform.position = Vector3.MoveTowards(this.transform.position, this.transform.position + velocity.normalized, moveSpeed * Time.deltaTime);
+            this.transform.position += velocity * moveSpeed * Time.deltaTime;
+
+            // キーボードの方向キーの移動量を取得し、その移動量を前の値から新しい値へと補間した状態をvelocityに入れ直す
+            velocity = Vector3.MoveTowards(oldVeclocity, velocity, moveSpeed * Time.deltaTime);
+            oldVeclocity = velocity;
+
+            this.transform.LookAt(transform.position + velocity);
+        }
+
+        float angle = LookCanon();
 
         // 弾の発射タイミングを管理するタイマーを更新する
         m_shotTimer += Time.deltaTime;
-
-        // まだ弾の発射タイミングではない場合は、ここで処理を終える
-        //if (m_shotTimer < m_shotInterval) return;
-
         
         // マウスクリック左で弾を発射
         if (Input.GetMouseButtonDown(0))
