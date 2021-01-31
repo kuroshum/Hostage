@@ -16,6 +16,7 @@ TagManager:
   - ShotItem
   - DecoyItem
   - Decoy
+  - EnemyReticle
   layers:
   - Default
   - TransparentFX
@@ -30,7 +31,7 @@ TagManager:
   - Hostage
   - EnemyShot
   - PlayerShot
-  - 
+  - EnemyReticle
   - 
   - 
   - 
