@@ -936,7 +936,7 @@ public class Enemy : Token
     /*===================================================*/
     // あたり判定の処理
 
-    void OnCollisionEnter(Collision col)
+    void OnTriggerEnter(Collider col)
     {
         // 弾にあたったら
         if (col.gameObject.tag == "Shot")
