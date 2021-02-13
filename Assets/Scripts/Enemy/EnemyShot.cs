@@ -99,6 +99,11 @@ public class EnemyShot : Token
         return es;
     }
 
+    public void StartShotEffect()
+    {
+        gm.StartStartExploson(this.transform.position + velocity, 1f);
+    }
+
     void OnTriggerEnter(Collider col)
     {
 

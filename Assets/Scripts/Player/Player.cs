@@ -71,6 +71,9 @@ public class Player : Token
     private bool startFlag;
     public void SetStartFlag(bool flag) { this.startFlag = flag; }
 
+    private bool moveFlag;
+    public void SetMoveFlag(bool flag) { this.moveFlag = flag; }
+
     public static Player Add(int id, float move_speed, float apply_speed, GameMgr gm,  float x, float y, float z, Camera mainCamera)
     {
         // Enemyインスタンスの取得
@@ -86,6 +89,7 @@ public class Player : Token
         p.SetGmaeMgr(gm);
 
         p.SetStartFlag(false);
+        p.SetMoveFlag(true);
 
         p.SetMainCamera(mainCamera);
 
@@ -193,6 +197,8 @@ public class Player : Token
             // 弾を発射する方向と速さを設定する
             shot.Init(angleBase, speed, gm);
 
+            //shot.StartShotEffect();
+
             //shot.UpdateShot();
         }
     }
@@ -221,6 +227,13 @@ public class Player : Token
         transform.rotation = Quaternion.RotateTowards(this.transform.rotation, Quaternion.Euler(diff), Time.deltaTime*10);
     }
 
+    private IEnumerator Stun()
+    {
+        moveFlag = false;
+        yield return new WaitForSeconds(0.05f);
+        moveFlag = true;
+    }
+
     //public void UpdatePlayer()
     void Update()
     {
@@ -228,7 +241,10 @@ public class Player : Token
 
         // WASD入力から、XZ平面(水平な地面)を移動する方向(velocity)を得ます
         velocity = Vector3.zero;
-        velocity = new Vector3(Input.GetAxis("Horizontal"), 0f, Input.GetAxis("Vertical"));
+        if (moveFlag == true)
+        {
+            velocity = new Vector3(Input.GetAxis("Horizontal"), 0f, Input.GetAxis("Vertical"));
+        }
 
         // いずれかの方向に移動している場合
         if (velocity.magnitude > 0)
@@ -280,9 +296,8 @@ public class Player : Token
 
                     }
                 }
+                StartCoroutine("Stun");
             }
-
-            
         }
 
         // マウスクリックでデコイを配置

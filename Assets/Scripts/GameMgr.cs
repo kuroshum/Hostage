@@ -126,6 +126,18 @@ public class GameMgr : MonoBehaviour
         es.Vanish();
     }
 
+    public void StartStartExploson(Vector3 pos, float time)
+    {
+        StartCoroutine(StartExploson(pos, time));
+    }
+
+    public IEnumerator StartExploson(Vector3 pos, float time)
+    {
+        ShotStartEffect ess = ShotStartEffect.Add(pos.x, pos.y, pos.z);
+        yield return new WaitForSeconds(time);
+        ess.Vanish();
+    }
+
     private void InitilizeDecoy()
     {
         Decoy.parent = new TokenMgr<Decoy>("Decoy", 10);
@@ -342,6 +354,7 @@ public class GameMgr : MonoBehaviour
         InitilizeStartEffect(startPos, startEffect);
 
         ShotEffect.parent = new TokenMgr<ShotEffect>("Exploson", ENEMY_NUM);
+        ShotStartEffect.parent = new TokenMgr<ShotStartEffect>("Exploson7", ENEMY_NUM);
 
         hostageFlag = false;
 

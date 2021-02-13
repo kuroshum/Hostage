@@ -1,15 +1,16 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
+
 
 public class Reticle : MonoBehaviour
 {
 
-    [SerializeField]
     private Texture2D reticle;
 
-    [SerializeField]
     private Texture2D reticleForcuse;
 
     private LineRenderer orbit;
@@ -17,6 +18,12 @@ public class Reticle : MonoBehaviour
 
     private Color normalColor = new Color(0f, 175f, 255f);
     private Color forcuseColor = new Color(255f, 0f, 0f);
+
+    void LoadTexture(Texture2D texture, string path)
+    {
+        byte[] bytes = File.ReadAllBytes(path);
+        texture.LoadImage(bytes);
+    }
 
     // Start is called before the first frame update
     void Start()
@@ -43,6 +50,11 @@ public class Reticle : MonoBehaviour
 
         orbit.startWidth = 0.1f;
         orbit.endWidth = 0.1f;
+
+        reticle = new Texture2D(2, 2);
+        LoadTexture(reticle, "Assets/Resources/reticle.png");
+        reticleForcuse = new Texture2D(2, 2);
+        LoadTexture(reticleForcuse, "Assets/Resources/reticle_forcus.png");
 
     }
 
@@ -99,6 +111,8 @@ public class Reticle : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        
+
         Vector3 mousePos = Input.mousePosition;
         mousePos.z = 15.0f;
         mousePos.x += 5f;
@@ -111,6 +125,10 @@ public class Reticle : MonoBehaviour
         // カーソルが敵の上かそれ以外でレティクルを変更
         ChangeReticle(mousePos, ray);
 
+        if (SceneManager.GetActiveScene().name != "Main")
+        {
+            return;
+        }
         // 
         DrawOrbit(mousePos, ray);
 
