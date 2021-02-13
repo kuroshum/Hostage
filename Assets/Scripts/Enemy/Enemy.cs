@@ -322,12 +322,12 @@ public class Enemy : Token
     /// 目的地の方向を向く
     /// </summary>
     /// <param name="targetPos"> 目的地の座標 </param>
-    public void LookTarget(Vector3 targetPos)
+    public void LookTarget(Vector3 targetPos, GameObject obj)
     {
         Quaternion rot = Quaternion.LookRotation(targetPos - this.transform.position);
-        if (Vector3.Angle(this.transform.forward, (targetPos - this.transform.position).normalized) > 2f)
+        if (Vector3.Angle(obj.transform.forward, (targetPos - this.transform.position).normalized) > 2f)
         {
-            this.transform.rotation = Quaternion.Lerp(this.transform.rotation, rot, speed / 30);
+            obj.transform.rotation = Quaternion.Lerp(obj.transform.rotation, rot, speed / 30);
         }
         else
         {
@@ -372,7 +372,7 @@ public class Enemy : Token
         }
 
         // 目的地の方向を向く
-        LookTarget(targetPos);
+        LookTarget(targetPos, this.gameObject);
 
         // 目的地の方向を向いたら移動する
         if (moveFlag == true)
@@ -797,7 +797,8 @@ public class Enemy : Token
     public void DecoyAttack(Vector3 pos)
     {
         // デコイの方向を向く
-        LookTarget(pos);
+        LookTarget(pos, tankTower);
+        LookTarget(pos, this.gameObject);
 
         // デコイに向かって弾を打つ
         Shoot(pos);
