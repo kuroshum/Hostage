@@ -71,6 +71,11 @@ public class PlayerShot : Token
         //Destroy(gameObject, 2);
     }
 
+    public void StartShotEffect()
+    {
+        gm.StartStartExploson(this.transform.position + velocity.normalized, 1f);
+    }
+
     void Update()
     {
         // 移動する

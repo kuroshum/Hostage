@@ -664,9 +664,9 @@ GameObject:
   m_Component:
   - component: {fileID: 5126659647455445946}
   - component: {fileID: 1415977837007541866}
-  m_Layer: 8
+  m_Layer: 13
   m_Name: GameObject
-  m_TagString: Enemy
+  m_TagString: EnemyReticle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

@@ -607,6 +607,8 @@ public class Enemy : Token
 
             // 弾を発射する方向と速さを設定する
             shot.Init(angleBase, speed, gm);
+
+            shot.StartShotEffect();
         }
     }
 

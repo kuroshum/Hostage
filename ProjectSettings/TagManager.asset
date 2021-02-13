@@ -32,7 +32,7 @@ TagManager:
   - EnemyShot
   - PlayerShot
   - EnemyReticle
-  - 
+  - Point
   - 
   - 
   - 
@@ -53,4 +53,7 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: LineRenderer
+    uniqueID: 3324799107
     locked: 0
