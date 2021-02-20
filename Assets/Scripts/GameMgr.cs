@@ -108,6 +108,8 @@ public class GameMgr : MonoBehaviour
 
     private bool moveCameraFlag;
 
+    public static List<GameObject> trailList;
+
 
     public bool GetHostageFlag()
     {
@@ -177,6 +179,8 @@ public class GameMgr : MonoBehaviour
         Random.InitState(10);
 
         int keyFlag = 0;
+
+        trailList = new List<GameObject>();
 
         /*===================================================*/
         // 敵を生成

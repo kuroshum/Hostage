@@ -220,6 +220,10 @@ public class Enemy : Token
 
     private DisplayPurpose dp;
 
+    private float trailTime;
+
+    private GameObject trailPrefab;
+
 
     public static Enemy Add(int id, float x, float y, float z, int stageID, GameMgr gm, ProbabilityMap pm)
     {
@@ -263,6 +267,8 @@ public class Enemy : Token
 
         obstTime = 0;
 
+        trailTime = 0;
+
         SelectTarget(pm, ref GameMgr.stageList);
 
         cautionEnemyUIFlag = false;
@@ -277,6 +283,8 @@ public class Enemy : Token
         startFlag = false;
 
         decoyFlag = false;
+
+        trailPrefab = Resources.Load("Prefabs/" + "tankTrail") as GameObject;
     }
 
     public void InitilizeUI()
@@ -516,7 +524,7 @@ public class Enemy : Token
     /// プレイヤーを探索
     /// </summary>
     /// <param name="playerPos"> プレイヤーの座標 </param>
-    public void SearchPlayer(Vector3 playerPos, float length, float range, Decoy decoy)
+    public void SearchPlayer(Vector3 playerPos, float length, float range, Decoy decoy, StateType state)
     {
         // プレイヤーと敵の間のベクトルを計算
         playerDirection = playerPos - this.transform.position;
@@ -557,7 +565,7 @@ public class Enemy : Token
                     relayStagePos = Vector3.zero;
 
                     // 攻撃ステートに設定
-                    SetStates(StateType.Danger);
+                    SetStates(state);
 
                     speed = dangerSpeed;
 
@@ -644,6 +652,8 @@ public class Enemy : Token
     {
         UI.transform.localPosition = this.transform.localPosition + offset;
     }
+
+    
     
 
     /*===================================================*/
@@ -874,7 +884,7 @@ public class Enemy : Token
         {
             if (d.GetIsDeath() == false)
             {
-                SearchPlayer(d.transform.position, length, range, d);
+                SearchPlayer(d.transform.position, length, range, d, StateType.Danger);
             }
             else
             {
@@ -885,7 +895,8 @@ public class Enemy : Token
         // デコイが見つからなかった場合、プレイヤーを探索
         if (decoyFlag == false)
         {
-            SearchPlayer(player.transform.position, length, range, null);
+            SearchPlayer(player.transform.position, length, range, null, StateType.Danger);
+            
         }
 
 
@@ -919,7 +930,7 @@ public class Enemy : Token
         {
             if (d.GetIsDeath() == false)
             {
-                SearchPlayer(d.transform.position, length, range, d);
+                SearchPlayer(d.transform.position, length, range, d, StateType.Danger);
             }
             else
             {
@@ -930,7 +941,13 @@ public class Enemy : Token
         // デコイが見つからなかった場合、プレイヤーを探索
         if (decoyFlag == false)
         {
-            SearchPlayer(player.transform.position, length, range, null);
+            SearchPlayer(player.transform.position, length, range, null, StateType.Danger);
+            Debug.Log(GameMgr.trailList.Count);
+            foreach (GameObject obj in GameMgr.trailList)
+            {
+                var pos = new Vector3(obj.transform.position.x, player.transform.position.y, obj.transform.position.z);
+                SearchPlayer(obj.transform.position, length, range, null, StateType.Caution);
+            }
         }
 
     }

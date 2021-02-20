@@ -74,6 +74,14 @@ public class Player : Token
     private bool moveFlag;
     public void SetMoveFlag(bool flag) { this.moveFlag = flag; }
 
+    private float trailTime;
+
+    private GameObject trailPrefab;
+    private void SetTrailPrefab() { trailPrefab = Resources.Load("Prefabs/" + "tankTrail") as GameObject; }
+    private Material trailPrefabMaterial;
+    private void SetTrailPrefabMaterial() { trailPrefabMaterial = GetComponent<MeshRenderer>().material; }
+
+
     public static Player Add(int id, float move_speed, float apply_speed, GameMgr gm,  float x, float y, float z, Camera mainCamera)
     {
         // Enemyインスタンスの取得
@@ -96,6 +104,9 @@ public class Player : Token
         p.SetTankTower();
 
         p.SetCanonPos();
+
+        p.SetTrailPrefab();
+        p.SetTrailPrefabMaterial();
 
         return p;
     }
@@ -234,10 +245,37 @@ public class Player : Token
         moveFlag = true;
     }
 
+    private void LeftTrail()
+    {
+        trailTime += Time.deltaTime;
+        if (trailTime > 0.35f)
+        {
+            trailTime = 0f;
+            Vector3 pos = new Vector3(this.transform.position.x, -0.499f, this.transform.position.z);
+            var obj = Instantiate(trailPrefab, pos, this.transform.rotation);
+            GameMgr.trailList.Add(obj);
+            StartCoroutine(DisappearTrail(obj));
+        }
+    }
+
+    private IEnumerator DisappearTrail(GameObject obj)
+    {
+        int step = 360;
+        for (int i = 0; i < step; i++)
+        {
+            obj.GetComponent<MeshRenderer>().material.color = new Color(1, 1, 1, 1 - 1.0f * i / step);
+            yield return null;
+        }
+        GameMgr.trailList.RemoveAt(0);
+        Destroy(obj);
+    }
+
     //public void UpdatePlayer()
     void Update()
     {
         if (startFlag == false) return;
+
+        
 
         // WASD入力から、XZ平面(水平な地面)を移動する方向(velocity)を得ます
         velocity = Vector3.zero;
@@ -259,6 +297,8 @@ public class Player : Token
             oldVeclocity = velocity;
 
             this.transform.LookAt(transform.position + velocity);
+
+            LeftTrail();
         }
 
         float angle = LookCanon();
