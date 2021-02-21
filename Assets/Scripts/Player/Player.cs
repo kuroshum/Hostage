@@ -253,6 +253,7 @@ public class Player : Token
             trailTime = 0f;
             Vector3 pos = new Vector3(this.transform.position.x, -0.499f, this.transform.position.z);
             var obj = Instantiate(trailPrefab, pos, this.transform.rotation);
+            obj.name = "trail" + GameMgr.trailList.Count();
             GameMgr.trailList.Add(obj);
             StartCoroutine(DisappearTrail(obj));
         }
@@ -260,7 +261,7 @@ public class Player : Token
 
     private IEnumerator DisappearTrail(GameObject obj)
     {
-        int step = 360;
+        int step = 900;
         for (int i = 0; i < step; i++)
         {
             obj.GetComponent<MeshRenderer>().material.color = new Color(1, 1, 1, 1 - 1.0f * i / step);
