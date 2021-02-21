@@ -567,7 +567,14 @@ public class Enemy : Token
                     // 攻撃ステートに設定
                     SetStates(state);
 
-                    speed = dangerSpeed;
+                    if (state == StateType.Danger)
+                    {
+                        speed = dangerSpeed;
+                    }
+                    else
+                    {
+                        speed = normalSpeed;
+                    }
 
                     this.decoy = decoy;
                 }
@@ -898,6 +905,9 @@ public class Enemy : Token
             SearchPlayer(player.transform.position, length, range, null, StateType.Danger);
             
         }
+
+        // プレイヤーの方向を向く
+        LookPlayer();
 
 
     }
