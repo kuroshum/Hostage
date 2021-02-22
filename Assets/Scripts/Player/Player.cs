@@ -253,7 +253,6 @@ public class Player : Token
             trailTime = 0f;
             Vector3 pos = new Vector3(this.transform.position.x, -0.499f, this.transform.position.z);
             var obj = Instantiate(trailPrefab, pos, this.transform.rotation);
-            //obj.name = "trail" + GameMgr.trailList.Count();
             GameMgr.trailList.Add(obj);
             StartCoroutine(DisappearTrail(obj));
         }
