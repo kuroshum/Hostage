@@ -39,6 +39,12 @@ public class Enemy : Token
     /// normalステートの場合の速度
     /// </summary>
     private float normalSpeed;
+
+    /// <summary>
+    /// cautionステートの場合の速度
+    /// </summary>
+    private float cautionSpeed;
+
     /// <summary>
     /// dangerステートの場合の速度
     /// </summary>
@@ -261,6 +267,7 @@ public class Enemy : Token
 
         this.speed = speed;
         normalSpeed = speed;
+        cautionSpeed = speed * 1.5f;
         dangerSpeed = speed * 2;
 
         //
