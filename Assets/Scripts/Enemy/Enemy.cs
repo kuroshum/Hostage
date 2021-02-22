@@ -56,6 +56,8 @@ public class Enemy : Token
     /// プレイヤーの方向
     /// </summary>
     private Vector3 playerDirection;
+
+    private Vector3 trailDirection;
     
     /// <summary>
     /// 目的地のステージ
@@ -223,6 +225,10 @@ public class Enemy : Token
     private float trailTime;
 
     private GameObject trailPrefab;
+
+    private bool trailFlag;
+
+    private int foundTrailInd;
 
 
     public static Enemy Add(int id, float x, float y, float z, int stageID, GameMgr gm, ProbabilityMap pm)
@@ -582,6 +588,68 @@ public class Enemy : Token
         }
     }
 
+    public void SearchPlayerTrail(Vector3 trailPos, GameObject trailObj, float length, float range, Decoy decoy, StateType state)
+    {
+        // プレイヤーと敵の間のベクトルを計算
+        trailDirection = trailPos - this.transform.position;
+
+        // プレイヤーと敵の間の距離が一定より近い場合
+        if (trailDirection.sqrMagnitude < length)
+        {
+            // ベクトルから角度を計算
+            var angle = Vector3.Angle(tankTower.transform.forward, trailDirection);
+
+            // プレイヤーが扇形の視界に入っている場合
+            if (angle <= range)
+            {
+                // プレイヤーと敵との間に障害物があるかを判定
+                bool obstPlayerFlag = false;
+                foreach (Wall s in GameMgr.wallList)
+                {
+                    Vector3 stageDirection = s.obj.transform.position - this.transform.position;
+                    var stageAngle = Vector3.Angle(trailDirection, stageDirection);
+
+                    if (stageAngle <= range && stageDirection.sqrMagnitude < trailDirection.sqrMagnitude)
+                    {
+                        Vector3 d = this.transform.position + Vector3.Project(stageDirection, trailDirection);
+                        if ((d - s.obj.transform.position).sqrMagnitude < 1f)
+                        {
+                            obstPlayerFlag = true;
+                            break;
+                        }
+                    }
+                }
+
+                // プレイヤーと敵との間に障害物がない場合
+                if (obstPlayerFlag == false)
+                {
+                    // 次の目的地をプレイヤーの座標に設定
+                    targetStagePos = trailPos;
+
+                    relayStagePos = Vector3.zero;
+
+                    // 攻撃ステートに設定
+                    SetStates(state);
+
+                    if (state == StateType.Danger)
+                    {
+                        speed = dangerSpeed;
+                    }
+                    else
+                    {
+                        speed = normalSpeed;
+                    }
+
+                    this.decoy = decoy;
+
+                    trailFlag = true;
+
+                    foundTrailInd = GameMgr.trailList.IndexOf(trailObj);
+                }
+            }
+        }
+    }
+
 
     /// <summary>
     /// 弾を発射する関数
@@ -705,7 +773,6 @@ public class Enemy : Token
                 // 通常の巡回
                 Patrol(normalEyeSightLength, normalEyeSightRange);
 
-                RotateCanon();
 
                 // 注意・警告のUIを非表示にする
                 dangerEnemyUIFlag = false;
@@ -718,8 +785,28 @@ public class Enemy : Token
             // 注意ステートの場合
             case StateType.Caution:
 
-                // 注意ステートの巡回
-                CautionPatrol(cautionEyeSightLength, cautionEyeSightRange, player.transform.position);
+                if (trailFlag == true)
+                {
+                    // 現在見つけている跡より一つ新しい跡を取得
+                    if(GameMgr.trailList.Count > foundTrailInd)
+                    {
+                        Vector3 pos = GameMgr.trailList[foundTrailInd].transform.position;
+                        pos = new Vector3(pos.x, player.transform.position.y, pos.z);
+                        // プレイヤーの跡を追跡
+                        CautionFollowTrail(cautionEyeSightLength, cautionEyeSightRange, pos);
+                    }
+                    else
+                    {
+                        trailFlag = false;
+                    }
+
+                }
+                else
+                {
+                    // 注意ステートの巡回
+                    CautionPatrol(cautionEyeSightLength, cautionEyeSightRange, player.transform.position);
+                }
+
 
                 // 注意のUIを表示する
                 dangerEnemyUIFlag = false;
@@ -860,6 +947,47 @@ public class Enemy : Token
 
     }
 
+    public void CautionFollowTrail(float length, float range, Vector3 pos)
+    {
+        // 目的位置に移動できているか
+        if (IsReachTarget())
+        {
+            // 中継地点に移動した場合は中継地点をリセットする
+            if (relayStagePos != Vector3.zero)
+            {
+                relayStagePos = Vector3.zero;
+            }
+            // 目的地点に移動した場合は目的地点を更新する
+            else
+            {
+                //targetStagePos = player.transform.position;
+                targetStagePos = pos;
+                foundTrailInd++;
+            }
+        }
+
+        // デコイを探索
+        foreach (Decoy d in GameMgr.decoyList)
+        {
+            if (d.GetIsDeath() == false)
+            {
+                SearchPlayer(d.transform.position, length, range, d, StateType.Danger);
+            }
+            else
+            {
+                decoyFlag = false;
+            }
+        }
+
+        
+        // デコイとプレイヤーの跡が見つからなかった場合、プレイヤーを探索
+        if (decoyFlag == false)
+        {
+            SearchPlayer(player.transform.position, length, range, null, StateType.Danger);
+
+        }
+    }
+
 
     /// <summary>
     /// cautionステートの場合の巡回
@@ -951,14 +1079,18 @@ public class Enemy : Token
         // デコイが見つからなかった場合、プレイヤーを探索
         if (decoyFlag == false)
         {
+            // プレイヤーを探索
             SearchPlayer(player.transform.position, length, range, null, StateType.Danger);
-            Debug.Log(GameMgr.trailList.Count);
+
+            // プレイヤーの跡を探索
             foreach (GameObject obj in GameMgr.trailList)
             {
                 var pos = new Vector3(obj.transform.position.x, player.transform.position.y, obj.transform.position.z);
-                SearchPlayer(obj.transform.position, length, range, null, StateType.Caution);
+                SearchPlayerTrail(pos, obj, length, range, null, StateType.Caution);
             }
         }
+
+        RotateCanon();
 
     }
 
