@@ -8,44 +8,110 @@ public class PopItem : MonoBehaviour
 
     private GameObject item;
 
-    private bool popFlag;
+    private Enemy enemy;
+
+    private bool popShotItemFlag;
+    private bool popDecoyItemFlag;
 
     private float itemSize;
     public void SetItemSize(float itemSize) { this.itemSize = itemSize; }
 
-    public void Init(GameMgr gm)
+    private float maxShotItemSize;
+    public void SetMaxShotItemSize(float maxShotItemSize) { this.maxShotItemSize = maxShotItemSize; }
+
+    private float maxDecoyItemSize;
+    public void SetMaxDecoyItemSize(float maxDecoyItemSize) { this.maxDecoyItemSize = maxDecoyItemSize; }
+
+    private float itemTime;
+    private void SetItemTime(float itemTime) { this.itemTime = itemTime; }
+
+    private bool followFlag;
+    //public void SetFollowFlag(bool followFlag) { this.followFlag = followFlag; }
+
+    public void Init(GameMgr gm, Enemy enemy)
     {
         this.gm = gm;
+
+        if (enemy != null)
+        {
+            followFlag = true;
+        }
+        else
+        {
+            followFlag = false;
+        }
+        this.enemy = enemy;
+
         SetItemSize(0.1f);
-        popFlag = false;
+        SetMaxShotItemSize(1.0f);
+        SetMaxDecoyItemSize(0.4f);
+        SetItemTime(0.0f);
+        popShotItemFlag = false;
+        popDecoyItemFlag = false;
+
     }
 
     private void PopShotItem()
     {
         item = gm.InstantiateShotItem(this.transform.position);
-        popFlag = true;
+        popShotItemFlag = true;
 
     }
 
     private void PopDecoyItem()
     {
         item = gm.InstantiateDecoyItem(this.transform.position);
-        popFlag = true;
+        popDecoyItemFlag = true;
+    }
+
+    private void Pop(float maxSize)
+    {
+        if (itemTime < 1f)
+        {
+            if (item.transform.localScale.x < maxSize)
+            {
+                itemSize += Time.deltaTime;
+                item.transform.localScale = new Vector3(itemSize, itemSize, itemSize);
+            }
+            item.transform.position = new Vector3(item.transform.position.x, Mathf.Sin(itemTime * Mathf.PI) * 3, item.transform.position.z);
+        }
+        itemTime += Time.deltaTime;
+    }
+
+    private void FollowEnemy()
+    {
+        this.transform.position = new Vector3(enemy.transform.position.x, enemy.transform.position.y - 5f, enemy.transform.position.z);
     }
 
     void Update()
     {
-        Debug.Log(popFlag);
-        if(popFlag == true)
+        if(followFlag == true)
         {
-            if(item.transform.localScale.x < 1f)
-            {
-                itemSize += Time.deltaTime;
-                item.transform.localScale = new Vector3(itemSize, itemSize, itemSize);
-                item.transform.position = new Vector3(item.transform.position.x, Mathf.Sin(itemSize*Mathf.PI)*3, item.transform.position.z);
-            }
-            
+            FollowEnemy();
         }
+
+        if(popShotItemFlag == true)
+        {
+            Pop(maxShotItemSize);
+        }
+        else if(popDecoyItemFlag == true)
+        {
+            Pop(maxDecoyItemSize);
+        }
+    }
+
+    public void DestroyItem()
+    {
+        if (Random.Range(0, 2) == 0)
+        {
+            PopShotItem();
+        }
+        else
+        {
+            PopDecoyItem();
+        }
+
+        StartCoroutine(DestroyItemBox());
     }
 
     private IEnumerator DestroyItemBox()
@@ -58,17 +124,9 @@ public class PopItem : MonoBehaviour
 
     private void OnTriggerEnter(Collider col)
     {
-        if(col.tag == "Shot" || col.tag == "EnemyShot" || col.tag == "Player")
+        if(col.tag == "Shot" || col.tag == "Player")
         {
-            if (Random.Range(0, 2) == 0)
-            {
-                PopShotItem();
-            }
-            else
-            {
-                PopDecoyItem();
-            }
-            StartCoroutine(DestroyItemBox());
+            DestroyItem();
         }
     }
 }

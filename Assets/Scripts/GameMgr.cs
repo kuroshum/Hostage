@@ -210,19 +210,22 @@ public class GameMgr : MonoBehaviour
                     break;
                 }
             }
-            //Debug.Log("enemy : " + ind);
-            //Debug.Log(ind + " stageID : " + stageList[ind].id);
-            Enemy e = Enemy.Add(enemyList.Count, stageList[ind].obj.transform.position.x, 1.0f, stageList[ind].obj.transform.position.z, stageList[ind].id, this, pm);
-
             // アイテムボックスを生成
-            if(i % 2 == 0)
+            if (i % 2 == 0)
             {
                 Vector3 itemPos = new Vector3(stageList[ind].obj.transform.position.x, 0.0f, stageList[ind].obj.transform.position.z);
                 var obj = Instantiate(itemBox, itemPos, itemBox.transform.rotation);
                 pi = obj.GetComponent<PopItem>();
-                pi.Init(this);
-                
+                pi.Init(this, null);
             }
+
+            // 敵を生成
+            Enemy e = Enemy.Add(enemyList.Count, stageList[ind].obj.transform.position.x, 1.0f, stageList[ind].obj.transform.position.z, stageList[ind].id, this, pm);
+            var itemObj = Instantiate(itemBox, Vector3.zero, itemBox.transform.rotation);
+            //itemObj.GetComponent<Renderer>().material.color = new Color(0, 0, 0, 0);
+
+            pi = itemObj.GetComponent<PopItem>();
+            pi.Init(this, e);
 
             // ショットアイテムとデコイアイテムを生成
             /*
@@ -239,12 +242,12 @@ public class GameMgr : MonoBehaviour
             // 敵に鍵持ちのステータスを設定する
             if (keyFlag == 1)
             {
-                e.InitMgrTarget(enemyMoveSpeed / 2, player, true, dp);
+                e.InitMgrTarget(enemyMoveSpeed / 2, player, true, dp, pi);
                 keyFlag++;
             }
             else
             {
-                e.InitMgrTarget(enemyMoveSpeed / 2, player, false, dp);
+                e.InitMgrTarget(enemyMoveSpeed / 2, player, false, dp, pi);
             }
 
             //Debug.Log(stageList[0].obj.transform.position);
@@ -406,9 +409,6 @@ public class GameMgr : MonoBehaviour
         dangerUI.SetActive(false);
         StartCoroutine("MoveCamera");
 
-        pi = new PopItem();
-        pi.Init(this);
-
     }
 
     // Update is called once per frame
@@ -475,8 +475,11 @@ public class GameMgr : MonoBehaviour
                         //Debug.Log("enemy : " + ind);
                         //Debug.Log(ind + " stageID : " + stageList[ind].id);
                         Enemy e = Enemy.Add(enemyList.Count, stageList[ind].obj.transform.position.x, 1.0f, stageList[ind].obj.transform.position.z, stageList[ind].id, this, pm);
+                        var itemObj = Instantiate(itemBox, Vector3.zero, itemBox.transform.rotation);
+                        pi = itemObj.GetComponent<PopItem>();
+                        pi.Init(this, e);
 
-                        e.InitMgrTarget(enemyMoveSpeed / 2, player, false, dp);
+                        e.InitMgrTarget(enemyMoveSpeed / 2, player, false, dp, pi);
 
                         //Debug.Log(stageList[0].obj.transform.position);
 
