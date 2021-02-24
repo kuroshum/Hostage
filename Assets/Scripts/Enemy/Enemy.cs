@@ -218,6 +218,8 @@ public class Enemy : Token
     private Transform canonPos;
     public void SetCanonPos() { canonPos = tankTower.transform.Find("CanonPos").transform; }
 
+    private PopItem pi;
+
 
     [SerializeField]
     private StateType states;
@@ -258,7 +260,7 @@ public class Enemy : Token
         return e;
     }
 
-    public void InitMgrTarget(float speed, Player p, bool keyUIFlag, DisplayPurpose dp)
+    public void InitMgrTarget(float speed, Player p, bool keyUIFlag, DisplayPurpose dp, PopItem pi)
     {
         relayStagePos = Vector3.zero;
 
@@ -298,6 +300,8 @@ public class Enemy : Token
         decoyFlag = false;
 
         trailPrefab = Resources.Load("Prefabs/" + "tankTrail") as GameObject;
+
+        this.pi = pi;
     }
 
     public void InitilizeUI()
@@ -1139,7 +1143,14 @@ public class Enemy : Token
                 dp.SetPurposeText("人質の場所に向かおう");
                 Debug.Log("Gate Open");
             }
-
+            if (Random.Range(0, 2) == 1)
+            {
+                pi.DestroyItem();
+            }
+            else
+            {
+                pi.gameObject.SetActive(false);
+            }
             Vanish();
         }
 
