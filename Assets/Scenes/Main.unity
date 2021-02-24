@@ -2499,6 +2499,7 @@ MonoBehaviour:
   dangerUI: {fileID: 1895986123}
   keyUI: {fileID: 0}
   stageFoundation: {fileID: 981942894}
+  itemBox: {fileID: 2913047274899882760, guid: a460a6edc66510c4894e4a859384eda3, type: 3}
   shotItem: {fileID: 4037772550343487964, guid: 54fc73024642c6646bad6eeffc870d56,
     type: 3}
   decoyItem: {fileID: 2834566352250274732, guid: 1f036a3902d400e4594b58de70b8ffbc,

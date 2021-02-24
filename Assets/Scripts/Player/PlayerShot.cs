@@ -95,28 +95,11 @@ public class PlayerShot : Token
 
     void OnTriggerEnter(Collider col)
     {
-        if (col.gameObject.tag == "Wall")
-        {
-            /*
-            if (tagName == "Player" && GameMgr.ENEMY_NUM > gm.GetActiveEnemyNum())
-            {
-                gm.Add_Enemy(transform.position);
-            }
-            */
-            Vanish();
-        }
-
-        if (col.gameObject.tag == "Enemy" || col.gameObject.tag == "Wall")
+        if (col.gameObject.tag == "Wall" || col.gameObject.tag == "Enemy" || col.gameObject.tag == "ItemBox")
         {
             gm.StartExploson(col, 1f);
-            //Vanish();
-        }
-
-        if (col.gameObject.tag == "Enemy")
-        {
             Vanish();
         }
     }
-
 
 }
