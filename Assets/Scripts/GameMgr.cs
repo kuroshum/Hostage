@@ -151,7 +151,7 @@ public class GameMgr : MonoBehaviour
         decoyList = new List<Decoy>(10);
     }
 
-    private void InitilizePlayer(Vector3 startPos, Camera camera)
+    private void InitilizePlayer(Vector3 startPos, GameObject camera)
     {
         // 管理オブジェクトを生成
         Player.parent = new TokenMgr<Player>("Player", 1);
@@ -173,6 +173,9 @@ public class GameMgr : MonoBehaviour
         player.InitilizeShot();
         player.InitilizeShotGauge(psg);
         player.InitilizeDecoyGauge(dg);
+
+        GameObject mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
+        player.InitilizeShakeScreen();
         //Follow.objTarget = p.gameObject;
     }
 
@@ -387,7 +390,7 @@ public class GameMgr : MonoBehaviour
         dp = this.GetComponent<DisplayPurpose>();
 
 
-        InitilizePlayer(startPos, camera);
+        InitilizePlayer(startPos, mainCamera);
         InitilizeHostage(endPos);
         InitilizeDecoy();
 

@@ -63,8 +63,8 @@ public class Player : Token
 
     private DecoyGauge dg;
 
-    private Camera mainCamera;
-    private void SetMainCamera(Camera mainCamera) { this.mainCamera = mainCamera; }
+    private GameObject mainCamera;
+    private void SetMainCamera(GameObject mainCamera) { this.mainCamera = mainCamera; }
 
     private Vector3 currentPosition = Vector3.zero;
 
@@ -81,8 +81,11 @@ public class Player : Token
     private Material trailPrefabMaterial;
     private void SetTrailPrefabMaterial() { trailPrefabMaterial = GetComponent<MeshRenderer>().material; }
 
+    private ShakeScreen ss;
 
-    public static Player Add(int id, float move_speed, float apply_speed, GameMgr gm,  float x, float y, float z, Camera mainCamera)
+    private Follow follow;
+
+    public static Player Add(int id, float move_speed, float apply_speed, GameMgr gm,  float x, float y, float z, GameObject mainCamera)
     {
         // Enemyインスタンスの取得
         Player p = parent.Add(x, y, z);
@@ -129,6 +132,11 @@ public class Player : Token
         hp = maxHp;
     }
 
+    public void InitilizeShakeScreen()
+    {
+        follow = mainCamera.GetComponent<Follow>();
+        ss = mainCamera.GetComponent<ShakeScreen>();
+    }
 
     public void SetHp(int hp)
     {
@@ -275,8 +283,6 @@ public class Player : Token
     {
         if (startFlag == false) return;
 
-        
-
         // WASD入力から、XZ平面(水平な地面)を移動する方向(velocity)を得ます
         velocity = Vector3.zero;
         if (moveFlag == true)
@@ -377,11 +383,6 @@ public class Player : Token
 
     }
 
-    void OnCollisionEnter(Collision col)
-    {
-        
-    }
-
     void OnTriggerEnter(Collider col)
     {
         if (col.gameObject.tag == "ShotItem")
@@ -398,6 +399,12 @@ public class Player : Token
             if (decoyNum > maxDecoyNum) decoyNum = maxDecoyNum;
             dg.SetDecoyGauge(decoyNum);
             col.gameObject.SetActive(false);
+        }
+
+        if(col.gameObject.tag == "EnemyShot")
+        {
+            follow.enabled = false;
+            ss.Shake(0.25f, 0.1f, follow);
         }
     }
 }
