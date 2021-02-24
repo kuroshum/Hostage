@@ -49,6 +49,9 @@ public class GameMgr : MonoBehaviour
     private GameObject stageFoundation;
 
     [SerializeField]
+    private GameObject itemBox;
+
+    [SerializeField]
     private GameObject shotItem;
 
     [SerializeField]
@@ -110,6 +113,7 @@ public class GameMgr : MonoBehaviour
 
     public static List<GameObject> trailList;
 
+    private PopItem pi;
 
     public bool GetHostageFlag()
     {
@@ -210,7 +214,19 @@ public class GameMgr : MonoBehaviour
             //Debug.Log(ind + " stageID : " + stageList[ind].id);
             Enemy e = Enemy.Add(enemyList.Count, stageList[ind].obj.transform.position.x, 1.0f, stageList[ind].obj.transform.position.z, stageList[ind].id, this, pm);
 
-            if(Random.Range(0,2) == 0)
+            // アイテムボックスを生成
+            if(i % 2 == 0)
+            {
+                Vector3 itemPos = new Vector3(stageList[ind].obj.transform.position.x, 0.0f, stageList[ind].obj.transform.position.z);
+                var obj = Instantiate(itemBox, itemPos, itemBox.transform.rotation);
+                pi = obj.GetComponent<PopItem>();
+                pi.Init(this);
+                
+            }
+
+            // ショットアイテムとデコイアイテムを生成
+            /*
+            if (Random.Range(0,2) == 0)
             {
                 var obj = Instantiate(shotItem, new Vector3(stageList[ind].obj.transform.position.x, 0.0f, stageList[ind].obj.transform.position.z), shotItem.transform.rotation);
             }
@@ -218,7 +234,9 @@ public class GameMgr : MonoBehaviour
             {
                 var obj = Instantiate(decoyItem, new Vector3(stageList[ind].obj.transform.position.x, 0.0f, stageList[ind].obj.transform.position.z), decoyItem.transform.rotation);
             }
+            */
 
+            // 敵に鍵持ちのステータスを設定する
             if (keyFlag == 1)
             {
                 e.InitMgrTarget(enemyMoveSpeed / 2, player, true, dp);
@@ -241,6 +259,7 @@ public class GameMgr : MonoBehaviour
             StartCoroutine(InitilizeEffect(e.transform.position, enemyEffect));
         }
         /*===================================================*/
+
     }
 
     private void InitilizeHostage(Vector3 startPos)
@@ -316,6 +335,22 @@ public class GameMgr : MonoBehaviour
         moveCameraFlag = true;
     }
 
+    public GameObject InstantiateShotItem(Vector3 pos)
+    {
+        GameObject obj = Instantiate(shotItem, pos, shotItem.transform.rotation);
+        obj.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+
+        return obj;
+    }
+
+    public GameObject InstantiateDecoyItem(Vector3 pos)
+    {
+        GameObject obj = Instantiate(decoyItem, pos, decoyItem.transform.rotation);
+        obj.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+
+        return obj;
+    }
+
     // Start is called before the first frame update
     void Start()
     {
@@ -370,6 +405,9 @@ public class GameMgr : MonoBehaviour
         cautionUI.SetActive(false);
         dangerUI.SetActive(false);
         StartCoroutine("MoveCamera");
+
+        pi = new PopItem();
+        pi.Init(this);
 
     }
 

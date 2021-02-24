@@ -17,6 +17,8 @@ TagManager:
   - DecoyItem
   - Decoy
   - EnemyReticle
+  - ItemBox
+  - ItemBpx
   layers:
   - Default
   - TransparentFX
