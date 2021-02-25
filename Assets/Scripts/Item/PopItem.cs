@@ -28,6 +28,13 @@ public class PopItem : MonoBehaviour
     private bool followFlag;
     //public void SetFollowFlag(bool followFlag) { this.followFlag = followFlag; }
 
+    /// <summary>
+    /// ID :
+    ///     0 : shotItem
+    ///     1 : DecoyItem
+    /// </summary>
+    private int itemID;
+
     public void Init(GameMgr gm, Enemy enemy)
     {
         this.gm = gm;
@@ -48,6 +55,16 @@ public class PopItem : MonoBehaviour
         SetItemTime(0.0f);
         popShotItemFlag = false;
         popDecoyItemFlag = false;
+
+        itemID = Random.Range(0, 2);
+        if (itemID == 0)
+        {
+            this.transform.Find("Shot").gameObject.SetActive(true);
+        }
+        else
+        {
+            this.transform.Find("Decoy").gameObject.SetActive(true);
+        }
 
     }
 
@@ -102,7 +119,7 @@ public class PopItem : MonoBehaviour
 
     public void DestroyItem()
     {
-        if (Random.Range(0, 2) == 0)
+        if (itemID == 0)
         {
             PopShotItem();
         }
