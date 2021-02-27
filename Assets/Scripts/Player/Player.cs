@@ -86,6 +86,8 @@ public class Player : Token
 
     private Follow follow;
 
+    private const float maxTrailTime = 0.35f;
+
     public static Player Add(int id, float move_speed, float apply_speed, GameMgr gm,  float x, float y, float z, GameObject mainCamera)
     {
         // Enemyインスタンスの取得
@@ -257,7 +259,16 @@ public class Player : Token
     private void LeftTrail()
     {
         trailTime += Time.deltaTime;
-        if (trailTime > 0.35f)
+        float time;
+        if (Input.GetKey(KeyCode.LeftShift))
+        {
+            time = maxTrailTime / 1.5f;
+        }
+        else
+        {
+            time = maxTrailTime;
+        }
+        if (trailTime > time)
         {
             trailTime = 0f;
             Vector3 pos = new Vector3(this.transform.position.x, this.transform.position.y - 0.459f, this.transform.position.z);
@@ -288,7 +299,32 @@ public class Player : Token
         velocity = Vector3.zero;
         if (moveFlag == true)
         {
-            velocity = new Vector3(Input.GetAxis("Horizontal"), 0f, Input.GetAxis("Vertical"));
+            if (Input.GetKey(KeyCode.W))
+            {
+                velocity.z += 1;
+            }
+            if (Input.GetKey(KeyCode.A))
+            {
+                velocity.x -= 1;
+            }
+            if (Input.GetKey(KeyCode.S))
+            {
+                velocity.z -= 1;
+            }
+            if (Input.GetKey(KeyCode.D))
+            {
+                velocity.x += 1;
+            }
+
+            if (Input.GetKey(KeyCode.LeftShift))
+            {
+                velocity = velocity.normalized * 1.5f;
+            }
+            else
+            {
+                velocity = velocity.normalized;
+            }
+            //velocity = new Vector3(Input.GetAxis("Horizontal"), 0f, Input.GetAxis("Vertical"));
         }
 
         // いずれかの方向に移動している場合
@@ -297,7 +333,7 @@ public class Player : Token
             // プレイヤーの位置(transform.position)の更新
             // 移動方向ベクトル(velocity)を足し込みます
             //this.transform.position = Vector3.MoveTowards(this.transform.position, this.transform.position + velocity.normalized, moveSpeed * Time.deltaTime);
-            this.transform.position += velocity.normalized * moveSpeed * Time.deltaTime;
+            this.transform.position += velocity * moveSpeed * Time.deltaTime;
 
             // キーボードの方向キーの移動量を取得し、その移動量を前の値から新しい値へと補間した状態をvelocityに入れ直す
             velocity = Vector3.MoveTowards(oldVeclocity, velocity, moveSpeed * Time.deltaTime);
