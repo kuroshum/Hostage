@@ -109,6 +109,23 @@ public class PopItem : MonoBehaviour
 
     private IEnumerator LoadScene()
     {
+        if(this.name == "EasyBox")
+        {
+            GameMgr.ROOM_NUM = 4;
+            GameMgr.ENEMY_NUM = 4;
+        }
+        else if(this.name == "NormalBox")
+        {
+            GameMgr.ROOM_NUM = 6;
+            GameMgr.ENEMY_NUM = 8;
+        }
+        else if (this.name == "HardBox")
+        {
+            GameMgr.ROOM_NUM = 8;
+            GameMgr.ENEMY_NUM = 10;
+        }
+
+        
         yield return new WaitForSeconds(1f);
         SceneManager.LoadScene("Main");
     }
