@@ -46,6 +46,9 @@ public class GameMgr : MonoBehaviour
     private GameObject keyUI;
 
     [SerializeField]
+    private GameObject purposeUI;
+
+    [SerializeField]
     private GameObject stageFoundation;
 
     [SerializeField]
@@ -177,6 +180,8 @@ public class GameMgr : MonoBehaviour
         GameObject mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
         player.InitilizeShakeScreen();
         //Follow.objTarget = p.gameObject;
+
+        trailList = new List<GameObject>();
     }
 
     void InitilizeEnemy()
@@ -187,7 +192,6 @@ public class GameMgr : MonoBehaviour
 
         int keyFlag = 0;
 
-        trailList = new List<GameObject>();
 
         /*===================================================*/
         // 敵を生成
@@ -372,8 +376,13 @@ public class GameMgr : MonoBehaviour
             stageIDList.Add(new List<int>());
         }
 
-        CreateStage cs = createStageManager.GetComponent<CreateStage>();
-        cs.Create(new Vector3(-1,0,1), ROOM_NUM);
+        if(SceneManager.GetActiveScene().name != "Select")
+        {
+            CreateStage cs = createStageManager.GetComponent<CreateStage>();
+            cs.Create(new Vector3(-1, 0, 1), ROOM_NUM);
+        }
+
+        
 
         stageFoundation.transform.position = new Vector3(stageCenterPos.x, -158f, stageCenterPos.z);
 
@@ -391,12 +400,24 @@ public class GameMgr : MonoBehaviour
 
 
         InitilizePlayer(startPos, mainCamera);
-        InitilizeHostage(endPos);
-        InitilizeDecoy();
 
-        InitilizeEnemy();
+        if (SceneManager.GetActiveScene().name != "Select")
+        {
+            InitilizeHostage(endPos);
+            InitilizeDecoy();
 
-        InitilizeStartEffect(startPos, startEffect);
+            InitilizeEnemy();
+
+            InitilizeStartEffect(startPos, startEffect);
+        }
+        else
+        {
+            mainCamera.transform.position = new Vector3(0f, -90f, -5f);
+            player.transform.position = new Vector3(0, -104, 0);
+
+            dp.SetPurposeText("難易度を選ぼう");
+        }
+
 
         ShotEffect.parent = new TokenMgr<ShotEffect>("Exploson", ENEMY_NUM);
         ShotStartEffect.parent = new TokenMgr<ShotStartEffect>("Exploson7", ENEMY_NUM);
@@ -425,10 +446,14 @@ public class GameMgr : MonoBehaviour
                 player.SetStartFlag(true);
                 cameraFollow.enabled = true;
                 moveCameraFlag = false;
-                foreach (Enemy e in enemyList)
+                if(enemyList != null)
                 {
-                    e.SetStartFlag(true);
+                    foreach (Enemy e in enemyList)
+                    {
+                        e.SetStartFlag(true);
+                    }
                 }
+                
             }
         }
 
@@ -442,73 +467,78 @@ public class GameMgr : MonoBehaviour
             SceneManager.LoadScene("GameClear");
         }
 
-        UpdateAlertUIStates();
 
-        // プレイヤーに人質が近づいたら人質を連れる
-        if ((player.transform.position - endPos).sqrMagnitude < 3f)
+        if (SceneManager.GetActiveScene().name != "Select")
         {
-            // 警告ステートの場合は人質を救出できない
-            int cnt = 0;
+            UpdateAlertUIStates();
+
+            // プレイヤーに人質が近づいたら人質を連れる
+            if ((player.transform.position - endPos).sqrMagnitude < 3f)
+            {
+                // 警告ステートの場合は人質を救出できない
+                int cnt = 0;
+                foreach(Enemy e in enemyList)
+                {
+                    //if (e.GetAttack()) cnt++;
+                    if (e.GetStates() == StateType.Danger) cnt++;
+                }
+                if(cnt == 0)
+                {
+                    hostageFlag = true;
+                    dp.SetPurposeText("スタート地点に戻ろう");
+                
+                    // 敵が
+                    if (Enemy.parent.Count() < (ENEMY_NUM / 2))
+                    {
+                        for (int i = 0; i < ENEMY_NUM / 4; i++)
+                        {
+                            int enemyNum = Random.Range(1, 3);
+                            int ind = 0;
+                            for (int j = 0; j < stageList.Count; j++)
+                            {
+                                //
+                                if (stageList[j].id == enemyNum)
+                                {
+                                    ind = j;
+                                    break;
+                                }
+                            }
+                            //Debug.Log("enemy : " + ind);
+                            //Debug.Log(ind + " stageID : " + stageList[ind].id);
+                            Enemy e = Enemy.Add(enemyList.Count, stageList[ind].obj.transform.position.x, 1.0f, stageList[ind].obj.transform.position.z, stageList[ind].id, this, pm);
+                            var itemObj = Instantiate(itemBox, Vector3.zero, itemBox.transform.rotation);
+                            pi = itemObj.GetComponent<PopItem>();
+                            pi.Init(this, e);
+
+                            e.InitMgrTarget(enemyMoveSpeed / 2, player, false, dp, pi);
+
+                            //Debug.Log(stageList[0].obj.transform.position);
+
+                            e.InitilizeShot();
+
+                            e.InitilizeUI();
+
+                            e.SetStartFlag(true);
+
+                            enemyList.Add(e);
+                        }
+                    }
+                }
+            }
+
+            // プレイヤーの周りにいない敵は描画しない
             foreach(Enemy e in enemyList)
             {
-                //if (e.GetAttack()) cnt++;
-                if (e.GetStates() == StateType.Danger) cnt++;
-            }
-            if(cnt == 0)
-            {
-                hostageFlag = true;
-                dp.SetPurposeText("スタート地点に戻ろう");
-                
-                // 敵が
-                if (Enemy.parent.Count() < (ENEMY_NUM / 2))
+                if((player.transform.position - e.transform.position).sqrMagnitude < 300f)
                 {
-                    for (int i = 0; i < ENEMY_NUM / 4; i++)
-                    {
-                        int enemyNum = Random.Range(1, 3);
-                        int ind = 0;
-                        for (int j = 0; j < stageList.Count; j++)
-                        {
-                            //
-                            if (stageList[j].id == enemyNum)
-                            {
-                                ind = j;
-                                break;
-                            }
-                        }
-                        //Debug.Log("enemy : " + ind);
-                        //Debug.Log(ind + " stageID : " + stageList[ind].id);
-                        Enemy e = Enemy.Add(enemyList.Count, stageList[ind].obj.transform.position.x, 1.0f, stageList[ind].obj.transform.position.z, stageList[ind].id, this, pm);
-                        var itemObj = Instantiate(itemBox, Vector3.zero, itemBox.transform.rotation);
-                        pi = itemObj.GetComponent<PopItem>();
-                        pi.Init(this, e);
-
-                        e.InitMgrTarget(enemyMoveSpeed / 2, player, false, dp, pi);
-
-                        //Debug.Log(stageList[0].obj.transform.position);
-
-                        e.InitilizeShot();
-
-                        e.InitilizeUI();
-
-                        e.SetStartFlag(true);
-
-                        enemyList.Add(e);
-                    }
+                    e.gameObject.SetActive(true);
+                }
+                else
+                {
+                    e.gameObject.SetActive(false);
                 }
             }
         }
 
-        // プレイヤーの周りにいない敵は描画しない
-        foreach(Enemy e in enemyList)
-        {
-            if((player.transform.position - e.transform.position).sqrMagnitude < 300f)
-            {
-                e.gameObject.SetActive(true);
-            }
-            else
-            {
-                e.gameObject.SetActive(false);
-            }
-        }
     }
 }

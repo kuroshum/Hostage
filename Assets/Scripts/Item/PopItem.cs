@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PopItem : MonoBehaviour
 {
@@ -70,14 +71,20 @@ public class PopItem : MonoBehaviour
 
     private void PopShotItem()
     {
-        item = gm.InstantiateShotItem(this.transform.position);
+        if (SceneManager.GetActiveScene().name != "Select")
+        {
+            item = gm.InstantiateShotItem(this.transform.position);
+        }
         popShotItemFlag = true;
 
     }
 
     private void PopDecoyItem()
     {
-        item = gm.InstantiateDecoyItem(this.transform.position);
+        if (SceneManager.GetActiveScene().name != "Select")
+        {
+            item = gm.InstantiateDecoyItem(this.transform.position);
+        }
         popDecoyItemFlag = true;
     }
 
@@ -100,21 +107,41 @@ public class PopItem : MonoBehaviour
         this.transform.position = new Vector3(enemy.transform.position.x, enemy.transform.position.y - 5f, enemy.transform.position.z);
     }
 
+    private IEnumerator LoadScene()
+    {
+        yield return new WaitForSeconds(1f);
+        SceneManager.LoadScene("Main");
+    }
+
     void Update()
     {
-        if(followFlag == true)
+        if (followFlag == true)
         {
             FollowEnemy();
         }
 
-        if(popShotItemFlag == true)
+        if (SceneManager.GetActiveScene().name != "Select")
         {
-            Pop(maxShotItemSize);
+            if (popShotItemFlag == true)
+            {
+                Pop(maxShotItemSize);
+            }
+            else if (popDecoyItemFlag == true)
+            {
+                Pop(maxDecoyItemSize);
+            }
         }
-        else if(popDecoyItemFlag == true)
+        else
         {
-            Pop(maxDecoyItemSize);
+            if (popShotItemFlag == true || popDecoyItemFlag == true)
+            {
+                StartCoroutine(LoadScene());
+            }
         }
+        
+
+        
+
     }
 
     public void DestroyItem()
@@ -134,7 +161,7 @@ public class PopItem : MonoBehaviour
     private IEnumerator DestroyItemBox()
     {
         this.transform.position = new Vector3(this.transform.position.x, this.transform.position.y - 10f, this.transform.position.z);
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(2f);
         this.gameObject.SetActive(false);
 
     }

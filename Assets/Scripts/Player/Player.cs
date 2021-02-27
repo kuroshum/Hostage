@@ -259,7 +259,7 @@ public class Player : Token
         if (trailTime > 0.35f)
         {
             trailTime = 0f;
-            Vector3 pos = new Vector3(this.transform.position.x, -0.499f, this.transform.position.z);
+            Vector3 pos = new Vector3(this.transform.position.x, this.transform.position.y - 0.459f, this.transform.position.z);
             var obj = Instantiate(trailPrefab, pos, this.transform.rotation);
             GameMgr.trailList.Add(obj);
             StartCoroutine(DisappearTrail(obj));
@@ -281,7 +281,7 @@ public class Player : Token
     //public void UpdatePlayer()
     void Update()
     {
-        if (startFlag == false) return;
+        //if (startFlag == false) return;
 
         // WASD入力から、XZ平面(水平な地面)を移動する方向(velocity)を得ます
         velocity = Vector3.zero;
@@ -329,19 +329,23 @@ public class Player : Token
                 m_shotTimer = 0;
 
                 // 近くに敵がいた場合はその敵のステートを攻撃にする
-                foreach (Enemy e in GameMgr.enemyList)
+                if(GameMgr.enemyList != null)
                 {
-                    if ((this.transform.position - e.transform.position).sqrMagnitude < e.GetNormalEyeSightLength())
+                    foreach (Enemy e in GameMgr.enemyList)
                     {
-                        if (e.GetStates() != StateType.Danger)
+                        if ((this.transform.position - e.transform.position).sqrMagnitude < e.GetNormalEyeSightLength())
                         {
-                            e.SetRelayStagePos(Vector3.zero);
-                            e.SetTargetStagePos(this.transform.position);
-                            e.SetStates(StateType.Caution);
-                        }
+                            if (e.GetStates() != StateType.Danger)
+                            {
+                                e.SetRelayStagePos(Vector3.zero);
+                                e.SetTargetStagePos(this.transform.position);
+                                e.SetStates(StateType.Caution);
+                            }
 
+                        }
                     }
                 }
+                
                 StartCoroutine("Stun");
             }
         }
