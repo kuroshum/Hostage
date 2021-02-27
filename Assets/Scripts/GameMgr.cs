@@ -101,9 +101,9 @@ public class GameMgr : MonoBehaviour
 
     private float rad = 0;
 
-    public static int ROOM_NUM = 8;
+    public static int ROOM_NUM;
 
-    public static int ENEMY_NUM = 10;
+    public static int ENEMY_NUM;
 
     public static Vector3 startPos;
     public static Vector3 endPos;
@@ -361,6 +361,11 @@ public class GameMgr : MonoBehaviour
         return obj;
     }
 
+    private void Awake()
+    {
+        enemyList = null;
+    }
+
     // Start is called before the first frame update
     void Start()
     {
@@ -378,8 +383,13 @@ public class GameMgr : MonoBehaviour
 
         if(SceneManager.GetActiveScene().name != "Select")
         {
+            // ステージを自動生成
             CreateStage cs = createStageManager.GetComponent<CreateStage>();
             cs.Create(new Vector3(-1, 0, 1), ROOM_NUM);
+        }
+        else
+        {
+            stageCenterPos = Vector3.zero;
         }
 
         
