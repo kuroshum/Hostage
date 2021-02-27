@@ -69,7 +69,7 @@ public class Reticle : MonoBehaviour
         if (Physics.Raycast(ray, out hit, Vector3.Distance(mousePos, this.transform.position), ~(1 << 14)))
         {
             // 衝突したオブジェクトがステージかウェイポイントの場合はデコイ配置
-            if (hit.collider.tag == "Enemy")
+            if (hit.collider.tag == "Enemy" || hit.collider.tag == "ItemBox")
             {
                 OnPointerEnter(reticleForcuse, forcuseColor);
             }
@@ -125,7 +125,7 @@ public class Reticle : MonoBehaviour
         // カーソルが敵の上かそれ以外でレティクルを変更
         ChangeReticle(mousePos, ray);
 
-        if (SceneManager.GetActiveScene().name != "Main")
+        if (SceneManager.GetActiveScene().name != "Main" && SceneManager.GetActiveScene().name != "Select")
         {
             return;
         }
