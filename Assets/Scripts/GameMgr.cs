@@ -477,7 +477,7 @@ public class GameMgr : MonoBehaviour
             SceneManager.LoadScene("GameOver");
         }
 
-        if(hostageFlag==true && (player.transform.position - startPos).sqrMagnitude < 2f)
+        if(hostageFlag==true && (player.transform.position - startPos).sqrMagnitude < 2f && (player.transform.position - hostage.transform.position).sqrMagnitude < 5f)
         {
             SceneManager.LoadScene("GameClear");
         }

@@ -90,11 +90,11 @@ public class Player : Token
 
     // スピードアップできる時間
     private float sppedUpTime;
-    private const float maxSpeedUpTime = 3f;
+    private const float maxSpeedUpTime = 5f;
 
     // スピードアップするリキャストタイム
     private float speedUpRecastTime;
-    private float maxspeedUpRecastTime = 5f;
+    private float maxspeedUpRecastTime = 1f;
 
     private bool speedUoFlag;
     private bool speedUpRecastFlag;
@@ -340,11 +340,11 @@ public class Player : Token
                 speedUoFlag = true;
 
                 // スピードアップする
-                velocity = velocity.normalized * 2f;
+                velocity = velocity.normalized * 1.5f;
 
             }
             // スピードアップがリキャストタイムに入った場合
-            if(speedUpRecastFlag == true)
+            else if(speedUpRecastFlag == true)
             {
                 // 
                 sppedUpTime = 0f;
@@ -355,6 +355,7 @@ public class Player : Token
                     speedUpRecastFlag = false;
                     speedUpRecastTime = 0f;
                 }
+                velocity = velocity.normalized;
             }
             else
             {
