@@ -49,6 +49,10 @@ public class GameMgr : MonoBehaviour
     private GameObject purposeUI;
 
     [SerializeField]
+    private Image speedUpGaugeUI;
+    public Image GetSpeedUpGaugeUI() { return speedUpGaugeUI; }
+
+    [SerializeField]
     private GameObject stageFoundation;
 
     [SerializeField]
@@ -176,6 +180,7 @@ public class GameMgr : MonoBehaviour
         player.InitilizeShot();
         player.InitilizeShotGauge(psg);
         player.InitilizeDecoyGauge(dg);
+        player.InitilizeSppedUpGauge();
 
         GameObject mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
         player.InitilizeShakeScreen();
