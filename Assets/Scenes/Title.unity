@@ -513,7 +513,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Click to Start
+  m_Text: "\u96E3\u6613\u5EA6\u3092\u9078\u629E\u3059\u308B"
 --- !u!222 &779320224
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -925,8 +925,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.0000097752, y: -29.26}
-  m_SizeDelta: {x: 293.2292, y: 58.51999}
+  m_AnchoredPosition: {x: -0.00000095367, y: -7.7}
+  m_SizeDelta: {x: 354.83124, y: 58.51999}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1034690623
 MonoBehaviour:

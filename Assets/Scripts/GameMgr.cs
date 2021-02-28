@@ -395,6 +395,7 @@ public class GameMgr : MonoBehaviour
         else
         {
             stageCenterPos = Vector3.zero;
+            //startPos = new Vector3(-1, -104, -3);
         }
 
         

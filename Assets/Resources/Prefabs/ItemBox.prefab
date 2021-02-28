@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 8698880904584555233}
   - component: {fileID: 5407855492157329629}
   - component: {fileID: 4304062946504247302}
-  m_Layer: 0
+  m_Layer: 15
   m_Name: Shot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -118,7 +118,7 @@ GameObject:
   - component: {fileID: 8518438059536942318}
   - component: {fileID: 6468946564744574967}
   - component: {fileID: 3851463660167304476}
-  m_Layer: 0
+  m_Layer: 15
   m_Name: ItemBox
   m_TagString: ItemBox
   m_Icon: {fileID: 0}
@@ -180,7 +180,7 @@ GameObject:
   - component: {fileID: 5957439804470121005}
   - component: {fileID: 6456074851441502510}
   - component: {fileID: 1803775476094550667}
-  m_Layer: 0
+  m_Layer: 15
   m_Name: Decoy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -342,6 +342,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: "\u0421TF_Box_Blue"
       objectReference: {fileID: 0}
+    - target: {fileID: 8112689006799632591, guid: 49ab7394bf48df74f9a2f51fd9d0c3b6,
+        type: 3}
+      propertyPath: m_Layer
+      value: 15
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 49ab7394bf48df74f9a2f51fd9d0c3b6, type: 3}
 --- !u!1 &8126910870374308971 stripped
@@ -422,6 +427,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: "\u0421TF_Box_Cap_Blue"
+      objectReference: {fileID: 0}
+    - target: {fileID: 6802580922007894326, guid: 01aefc43126577342a914d6888b57a3b,
+        type: 3}
+      propertyPath: m_Layer
+      value: 15
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 01aefc43126577342a914d6888b57a3b, type: 3}

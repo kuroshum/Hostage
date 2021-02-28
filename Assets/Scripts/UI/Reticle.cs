@@ -51,11 +51,16 @@ public class Reticle : MonoBehaviour
         orbit.startWidth = 0.1f;
         orbit.endWidth = 0.1f;
 
+        //*
+        reticle = Resources.Load("reticle", typeof(Texture2D)) as Texture2D;
+        reticleForcuse = Resources.Load("reticle_forcus", typeof(Texture2D)) as Texture2D;
+        /*/
+        /*
         reticle = new Texture2D(2, 2);
         LoadTexture(reticle, "Assets/Resources/reticle.png");
         reticleForcuse = new Texture2D(2, 2);
         LoadTexture(reticleForcuse, "Assets/Resources/reticle_forcus.png");
-
+        */
     }
 
     private void ChangeReticle(Vector3 mousePos, Ray ray)

@@ -94,7 +94,7 @@ public class Player : Token
 
     // スピードアップするリキャストタイム
     private float speedUpRecastTime;
-    private float maxspeedUpRecastTime = 1f;
+    private float maxspeedUpRecastTime = 10f;
 
     private bool speedUoFlag;
     private bool speedUpRecastFlag;
