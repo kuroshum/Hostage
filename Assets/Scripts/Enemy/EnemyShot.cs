@@ -109,10 +109,12 @@ public class EnemyShot : Token
 
         if(col.gameObject.tag == "Player")
         {
+            player.SetHp(player.GetHp() - 1);
+            Vanish();
+            /*
             Vector2 eshot_forward = new Vector2(this.transform.forward.x, this.transform.forward.z);
             Vector2 player_forward = new Vector2(col.transform.forward.x, col.transform.forward.z);
-
-            // 
+            
             if (Mathf.Abs(player.GetAngle(player_forward, eshot_forward)) > 30f && Mathf.Abs(Vector2.Dot(player_forward, eshot_forward)) > 0.1f)
             {
                 Debug.Log("跳弾");
@@ -126,6 +128,7 @@ public class EnemyShot : Token
                 player.SetHp(player.GetHp() - 1);
                 Vanish();
             }
+            */
         }
 
         if (col.gameObject.tag == "PlayerShot" || col.gameObject.tag == "Decoy")
