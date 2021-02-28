@@ -88,6 +88,17 @@ public class Player : Token
 
     private const float maxTrailTime = 0.35f;
 
+    // スピードアップできる時間
+    private float sppedUpTime;
+    private const float maxSpeedUpTime = 3f;
+
+    // スピードアップするリキャストタイム
+    private float speedUpRecastTime;
+    private float maxspeedUpRecastTime = 5f;
+
+    private bool speedUoFlag;
+    private bool speedUpRecastFlag;
+
     public static Player Add(int id, float move_speed, float apply_speed, GameMgr gm,  float x, float y, float z, GameObject mainCamera)
     {
         // Enemyインスタンスの取得
@@ -115,6 +126,14 @@ public class Player : Token
         p.SetTrailPrefabMaterial();
 
         return p;
+    }
+
+    public void InitilizeSppedUpGauge()
+    {
+        sppedUpTime = 0f;
+        speedUpRecastTime = 0f;
+        speedUoFlag = false;
+        speedUpRecastFlag = false;
     }
 
     public void InitilizeShotGauge(PlayerShotGauge psg)
@@ -260,7 +279,7 @@ public class Player : Token
     {
         trailTime += Time.deltaTime;
         float time;
-        if (Input.GetKey(KeyCode.LeftShift))
+        if (Input.GetKey(KeyCode.LeftShift) && sppedUpTime < maxSpeedUpTime)
         {
             time = maxTrailTime / 1.5f;
         }
@@ -316,13 +335,49 @@ public class Player : Token
                 velocity.x += 1;
             }
 
-            if (Input.GetKey(KeyCode.LeftShift))
+            if (Input.GetKey(KeyCode.LeftShift) && speedUpRecastFlag == false)
             {
-                velocity = velocity.normalized * 1.5f;
+                speedUoFlag = true;
+
+                // スピードアップする
+                velocity = velocity.normalized * 2f;
+
+            }
+            // スピードアップがリキャストタイムに入った場合
+            if(speedUpRecastFlag == true)
+            {
+                // 
+                sppedUpTime = 0f;
+                speedUpRecastTime += Time.deltaTime;
+                gm.GetSpeedUpGaugeUI().fillAmount = speedUpRecastTime / maxspeedUpRecastTime;
+                if (speedUpRecastTime > maxspeedUpRecastTime)
+                {
+                    speedUpRecastFlag = false;
+                    speedUpRecastTime = 0f;
+                }
             }
             else
             {
+                if (gm.GetSpeedUpGaugeUI().fillAmount > 0f && speedUoFlag == true)
+                {
+                    gm.GetSpeedUpGaugeUI().fillAmount -= 1f / maxSpeedUpTime * Time.deltaTime;
+                }
                 velocity = velocity.normalized;
+            }
+
+            if (speedUoFlag == true)
+            {
+                // スピードアップしている時間を計測
+                sppedUpTime += Time.deltaTime;
+
+                // 上限時間までスピードアップした場合はスピードアップを止めてリキャストに入る
+                if (sppedUpTime > maxSpeedUpTime)
+                {
+                    speedUpRecastFlag = true;
+                    speedUoFlag = false;
+                }
+
+                gm.GetSpeedUpGaugeUI().fillAmount -= 1f / maxSpeedUpTime * Time.deltaTime;
             }
             //velocity = new Vector3(Input.GetAxis("Horizontal"), 0f, Input.GetAxis("Vertical"));
         }
